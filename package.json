@@ -1,0 +1,48 @@
+{
+  "name": "aes-gcm-stream-wasm",
+  "version": "0.1.0",
+  "description": "WebAssembly-powered streaming AES-256-GCM implementation",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./stream": {
+      "import": "./dist/stream.js",
+      "types": "./dist/stream.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "pkg/"
+  ],
+  "scripts": {
+    "build": "npm run build:rust && npm run build:js",
+    "build:rust": "cd rust && wasm-pack build --target web --out-dir ../pkg",
+    "build:js": "tsc --project tsconfig.json",
+    "test": "npm run test:rust && npm run test:js",
+    "test:rust": "cd rust && wasm-pack test --node",
+    "test:js": "tsx --test",
+    "clean": "rm -rf pkg/ target/ dist/ rust/target/",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "aes",
+    "gcm",
+    "streaming",
+    "webassembly",
+    "wasm",
+    "encryption",
+    "crypto"
+  ],
+  "author": "Ben Brook",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.x",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}

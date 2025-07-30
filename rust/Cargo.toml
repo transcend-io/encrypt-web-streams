@@ -12,3 +12,6 @@ crate-type = ["cdylib"]
 aes-gcm-stream = "0.2.4"
 # glue to talk to JS
 wasm-bindgen = "0.2"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.2"

@@ -49,17 +49,38 @@ If you plan to build from source, skip to [Building from Source](#building-from-
 git clone https://github.com/yourusername/aes-gcm-stream-wasm.git
 cd aes-gcm-stream-wasm
 
-# Build the WASM package for web targets
-wasm-pack build --target web
+# Install dependencies
+pnpm install
+
+# Build both Rust WASM and JavaScript wrapper
+pnpm run build
 ```
 
-This produces a `pkg/` directory containing:
+This produces:
+- `pkg/` directory containing the compiled WebAssembly module
+- `js/dist/` directory containing the compiled JavaScript wrapper
 
-* `aes_gcm_stream_wasm.js` (ES module entry point)
-* `aes_gcm_stream_wasm_bg.wasm` (compiled WebAssembly binary)
-* TypeScript definitions (`.d.ts`)
+### Project Structure
 
-You can then use `npm publish` or import the `pkg/` directly in your bundler.
+```
+aes-gcm-stream-wasm/
+├── rust/                  # Rust workspace
+│   ├── src/               # Rust source code
+│   │   └── lib.rs         # WASM bindings
+│   ├── Cargo.toml         # Rust dependencies
+│   └── Cargo.lock         # Rust lock file
+├── js/                    # JavaScript workspace
+│   ├── src/               # TypeScript source
+│   │   ├── index.ts       # Main entry point
+│   │   └── stream.ts      # TransformStream implementation
+│   ├── test/              # JavaScript tests
+│   ├── dist/              # Compiled JavaScript (generated)
+│   ├── package.json       # JavaScript package.json
+│   └── tsconfig.json      # TypeScript configuration
+├── pkg/                   # Compiled WASM (generated)
+├── package.json           # Root package.json (monorepo)
+└── README.md              # Main documentation
+```
 
 ---
 
@@ -88,38 +109,20 @@ Located in `src/lib.rs` and exposed via `wasm-bindgen`.
 
 ---
 
-### JavaScript Wrapper (`stream.ts`)
+### JavaScript Wrapper (`js/src/`)
 
 Provides a more ergonomic, web-native API on top of the WASM exports.
 
 ```ts
-import initWasm, {
-  Encryptor,
-  Decryptor
-} from "./pkg/aes_gcm_stream_wasm.js";
+import { init, createEncryptStream, createDecryptStream } from "aes-gcm-stream-wasm";
 
-let wasmReady: Promise<void>;
-export function init() {
-  if (!wasmReady) wasmReady = initWasm();
-  return wasmReady;
-}
-
-export function createEncryptStream(
-  key: Uint8Array,
-  nonce: Uint8Array,
-  adata?: Uint8Array
-): TransformStream<Uint8Array, Uint8Array> { /* ... */ }
-
-export function createDecryptStream(
-  key: Uint8Array,
-  nonce: Uint8Array,
-  adata?: Uint8Array
-): TransformStream<Uint8Array, Uint8Array> { /* ... */ }
+// Or import the stream module directly
+import { createEncryptStream, createDecryptStream } from "aes-gcm-stream-wasm/stream";
 ```
 
 #### JS API
 
-* `init(): Promise<void>` — asynchronously loads the WASM module
+* `init(): Promise<InitOutput>` — asynchronously loads the WASM module
 * `createEncryptStream(key, nonce, adata?)` — returns a `TransformStream` encrypting each chunk
 * `createDecryptStream(key, nonce, adata?)` — returns a `TransformStream` decrypting and verifying each chunk
 
@@ -128,7 +131,7 @@ export function createDecryptStream(
 ## Usage Examples
 
 ```js
-import { init, createEncryptStream, createDecryptStream } from "aes-gcm-stream-wasm/stream.js";
+import { init, createEncryptStream, createDecryptStream } from "aes-gcm-stream-wasm";
 
 (async () => {
   await init();

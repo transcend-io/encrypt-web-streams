@@ -1,4 +1,4 @@
-import initWasm, { Encryptor, Decryptor, type InitOutput } from "./pkg/aes_gcm_stream_wasm.js";
+import initWasm, { Encryptor, Decryptor, type InitOutput } from "../pkg/aes_gcm_stream_wasm.js";
 
 let _wasmReady: Promise<InitOutput> | null = null;
 export function init() {
