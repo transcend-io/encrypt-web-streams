@@ -1,0 +1,14 @@
+[package]
+name = "aes_gcm_stream_wasm"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+# produce a CDyLib for wasm-pack
+crate-type = ["cdylib"]
+
+[dependencies]
+# streaming AES-GCM implementation
+aes-gcm-stream = "0.2.4"
+# glue to talk to JS
+wasm-bindgen = "0.2"
