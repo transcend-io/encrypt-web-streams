@@ -62,17 +62,8 @@ export function createDecryptStream(
 
   let hasData = false;
 
-  let totalChunks = 0;
-  let totalBytes = 0;
-
   return new TransformStream({
     transform(chunk, controller) {
-      totalChunks += 1;
-      totalBytes += chunk.length;
-
-      console.log(
-        `chunks ${totalChunks.toLocaleString().padStart(10)} ${totalBytes.toLocaleString().padStart(10)}`,
-      );
       const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
       const out = dec.update(buf);
       hasData = true;
