@@ -1,6 +1,7 @@
 {
   "name": "@bencmbrook/aes_gcm_stream",
   "version": "0.1.0-alpha.1",
+  "private": false,
   "description": "WebAssembly-powered streaming AES-256-GCM implementation",
   "type": "module",
   "main": "./dist/index.js",
@@ -43,6 +44,7 @@
     "streaming",
     "webassembly",
     "wasm",
+    "web-streams",
     "encryption",
     "crypto"
   ],
