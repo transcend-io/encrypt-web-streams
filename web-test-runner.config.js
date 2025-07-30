@@ -18,7 +18,8 @@ export default {
   `,
   testFramework: {
     config: {
-      timeout: 10_000, // 10 seconds timeout
+      timeout: 5 * 60 * 1000, // 5 minutes
     },
   },
+  testsFinishTimeout: 5 * 60 * 1000, // 5 minutes
 };

@@ -6,6 +6,8 @@ import type { Fixture } from '../fixtures/rebuild-fixtures.js';
 
 declare function it(name: string, callback: () => void): Promise<void> | void;
 const fixtures = fixturesJson as Fixture[];
+const REMOTE_FIXTURES_URL =
+  'https://fixtures-for-conflux-and-penumbra.s3.us-east-1.amazonaws.com';
 
 await init();
 
@@ -35,12 +37,13 @@ function getDecryptionInfo(fixture: Fixture) {
 
 void it('should decrypt fixtures', async () => {
   for (const fixture of fixtures) {
-    // Skip the big.zip.enc file as it doesn't exist
-    if (fixture.url === '/files/encrypted/big.zip.enc') {
-      continue;
-    }
+    const url =
+      fixture.url === '/files/encrypted/big.zip.enc'
+        ? `${REMOTE_FIXTURES_URL}/files/encrypted/big.zip.enc`
+        : `fixtures/${fixture.url}`;
+
     // Get encrypted fixture
-    const response = await fetch(`fixtures/${fixture.url}`);
+    const response = await fetch(url);
     const sourceStream = response.body;
     if (!sourceStream) {
       throw new Error(`Failed to fetch fixture ${fixture.url}`);
