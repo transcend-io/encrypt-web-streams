@@ -1,4 +1,4 @@
-# aes-gcm-stream-wasm
+# aes_gcm_stream
 
 A WebAssembly-powered, truly streaming AES-256-GCM implementation for Node.js and the web. This library wraps the Rust [`aes-gcm-stream`](https://lib.rs/crates/aes-gcm-stream) crate and provides both direct WASM bindings and a streaming API.
 
@@ -9,21 +9,12 @@ A WebAssembly-powered, truly streaming AES-256-GCM implementation for Node.js an
 - **Node.js and Web support**: Works in both Node.js and browser environments.
 - **One-shot or streaming**: Use in single-call mode or stream mode depending on your needs.
 
-## Prerequisites
-
-- Rust (edition 2024)
-- [`wasm-pack`](https://github.com/rustwasm/wasm-pack)
-- Node.js / bundler that supports ES modules
-
 ## Table of Contents
 
 1. [Installation](#installation)
 2. [Building from Source](#building-from-source)
 3. [API Reference](#api-reference)
 4. [Usage Examples](#usage-examples)
-5. [Testing](#testing)
-6. [Contributing](#contributing)
-7. [License](#license)
 
 ---
 
@@ -32,7 +23,7 @@ A WebAssembly-powered, truly streaming AES-256-GCM implementation for Node.js an
 Install the published package via npm:
 
 ```bash
-npm install aes-gcm-stream-wasm
+npm install @bencmbrook/aes_gcm_stream
 ```
 
 If you plan to build from source, skip to [Building from Source](#building-from-source).
@@ -41,89 +32,42 @@ If you plan to build from source, skip to [Building from Source](#building-from-
 
 ## Building from Source
 
+### Prerequisites
+
+- Rust (edition 2024)
+- [`wasm-pack`](https://github.com/rustwasm/wasm-pack)
+- Node.js / bundler that supports ES modules
+
 ```bash
 # Clone this repository
-git clone https://github.com/yourusername/aes-gcm-stream-wasm.git
-cd aes-gcm-stream-wasm
+git clone https://github.com/bencmbrook/aes_gcm_stream.git
+cd aes_gcm_stream
 
 # Install dependencies
 pnpm install
 
-# Build the Rust WASM module for Node.js
-cd rust
-wasm-pack build --target nodejs
-cd ..
+# Build the Rust WASM module (at pkg/*) for the browser
+pnpm build
 
 # Run tests
-pnpm test:js
+pnpm test
 ```
 
-This produces:
+`pnpm build` produces:
 
 - `pkg/` directory containing the compiled WebAssembly module
-- `src/` directory containing the TypeScript wrapper
-
-### Project Structure
-
-```
-aes-gcm-stream-wasm/
-├── rust/                  # Rust workspace
-│   ├── src/               # Rust source code
-│   │   └── lib.rs         # WASM bindings
-│   ├── Cargo.toml         # Rust dependencies
-│   └── Cargo.lock         # Rust lock file
-├── src/                   # TypeScript source
-│   ├── index.ts           # Main entry point
-│   └── stream.ts          # TransformStream implementation
-├── test/                  # JavaScript tests
-├── pkg/                   # Compiled WASM (generated)
-├── package.json           # Package configuration
-└── README.md              # Main documentation
-```
-
----
+- `dist/` directory containing the TypeScript output for the library
 
 ## API Reference
 
-### Direct WASM Bindings
-
-Located in `pkg/aes_gcm_stream_wasm.js` and exposed via `wasm-bindgen`.
-
-#### `Encryptor`
-
-- `new(key: Uint8Array, nonce: Uint8Array) -> Encryptor`
-  - `key`: 32 bytes (256 bits)
-  - `nonce`: recommended 12 bytes
-
-- `init_adata(adata: Uint8Array)` — (optional) additional authenticated data
-- `update(chunk: Uint8Array) -> Uint8Array` — encrypt a chunk
-- `finalize() -> Uint8Array` — finalize and return remaining ciphertext concatenated with 16-byte tag
-
-#### `Decryptor`
-
-- `new(key: Uint8Array, nonce: Uint8Array) -> Decryptor`
-- `init_adata(adata: Uint8Array)` — (optional)
-- `update(chunk: Uint8Array) -> Uint8Array` — decrypt a chunk
-- `finalize() -> Uint8Array` — finalize, verify tag, and return remaining plaintext or throw on auth failure
-
----
-
-### JavaScript Wrapper
-
-Provides a more ergonomic API on top of the WASM exports.
+Provides TransformStreams for AES-256-GCM encryption and decryption.
 
 ```ts
 import {
   init,
   createEncryptStream,
   createDecryptStream,
-} from 'aes-gcm-stream-wasm';
-
-// Or import the stream module directly
-import {
-  createEncryptStream,
-  createDecryptStream,
-} from 'aes-gcm-stream-wasm/stream';
+} from '@bencmbrook/aes_gcm_stream';
 ```
 
 #### JS API
@@ -132,81 +76,41 @@ import {
 - `createEncryptStream(key, nonce, adata?)` — returns a `TransformStream` encrypting each chunk
 - `createDecryptStream(key, nonce, adata?)` — returns a `TransformStream` decrypting and verifying each chunk
 
-**Note**: The current TransformStream implementation has some limitations due to the buffering behavior of the underlying WASM module. The direct WASM bindings (`Encryptor` and `Decryptor`) are fully functional and recommended for most use cases.
-
----
-
-## Usage Examples
-
-### Direct WASM Usage (Recommended)
-
-```js
-import { Decryptor, Encryptor } from 'aes-gcm-stream-wasm';
-
-const key = new Uint8Array(32).fill(1);
-const nonce = new Uint8Array(12).fill(2);
-const plaintext = new TextEncoder().encode('Hello, World!');
-
-// Encrypt
-const encryptor = new Encryptor(key, nonce);
-const encrypted = encryptor.update(plaintext);
-const final = encryptor.finalize();
-
-// Decrypt
-const decryptor = new Decryptor(key, nonce);
-const decrypted = decryptor.update(encrypted);
-const result = decryptor.finalize();
-
-// Combine results
-const decryptedText = new TextDecoder().decode(
-  new Uint8Array([...decrypted, ...result]),
-);
-console.log(decryptedText); // "Hello, World!"
-```
-
-### Streaming Usage (Experimental)
+### Streaming Usage
 
 ```js
 import {
-  createDecryptStream,
-  createEncryptStream,
   init,
-} from 'aes-gcm-stream-wasm';
+  createEncryptStream,
+  createDecryptStream,
+} from '@bencmbrook/aes_gcm_stream';
 
-(async () => {
-  await init();
+await init();
 
-  const key = new Uint8Array(32).fill(1);
-  const nonce = new Uint8Array(12).fill(2);
-  const adata = new TextEncoder().encode('header');
+const key = new Uint8Array(32);
+const nonce = new Uint8Array(12);
 
-  // Create streams
-  const encryptStream = createEncryptStream(key, nonce, adata);
-  const decryptStream = createDecryptStream(key, nonce, adata);
+const encryptStream = createEncryptStream(key, nonce);
+const decryptStream = createDecryptStream(key, nonce);
 
-  // Note: The current stream implementation may have issues with buffering
-  // Use the direct WASM bindings for production code
-})();
+try {
+  await new ReadableStream({
+    start(controller) {
+      for (let index = 0; index < 1000; index++) {
+        controller.enqueue(new TextEncoder().encode('Hello, World!'));
+      }
+    },
+  })
+    .pipeThrough(encryptStream)
+    .pipeThrough(decryptStream)
+    .pipeTo(
+      new WritableStream({
+        write(chunk) {
+          console.log(new TextDecoder().decode(chunk));
+        },
+      }),
+    );
+} catch (error) {
+  console.error(error);
+}
 ```
-
----
-
-## Testing
-
-Run the JavaScript tests:
-
-```bash
-pnpm test:js
-```
-
----
-
-## Contributing
-
-Contributions and issues are welcome! Please open a pull request or issue on GitHub.
-
----
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
