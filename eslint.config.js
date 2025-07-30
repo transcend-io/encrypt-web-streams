@@ -13,9 +13,12 @@ const eslintConfig = tseslint.config(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['*.config.js', 'example/*.js'],
+          allowDefaultProject: [
+            '*.config.js',
+            'example/*.js',
+            'benchmark/src/*.ts',
+          ],
         },
-        tsconfigRootDir: import.meta.dirname,
       },
     },
     linterOptions: {

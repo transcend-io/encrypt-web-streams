@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "scripts": {
+    "benchmark": "tsx benchmark/src/index.ts"
+  },
+  "dependencies": {
+    "tinybench": "^4.0.1",
+    "@bencmbrook/aes_gcm_stream": "file:../"
+  }
+}
