@@ -21,9 +21,6 @@ const cryptoKey = await crypto.subtle.importKey(
   ['encrypt', 'decrypt'],
 );
 
-let aesGcmStreamWasmResult = '';
-let cryptoSubtleResult = '';
-
 const NUM_CHUNKS = 1;
 const CHUNK_SIZE = 1024;
 
@@ -54,13 +51,7 @@ bench
     await readableStream
       .pipeThrough(encryptStream)
       .pipeThrough(decryptStream)
-      .pipeTo(
-        new WritableStream({
-          write(chunk) {
-            aesGcmStreamWasmResult += new TextDecoder().decode(chunk);
-          },
-        }),
-      );
+      .pipeTo(new WritableStream());
   })
   .add(
     'crypto.subtle (cannot stream; use separately encrypted chunks)',
@@ -79,12 +70,11 @@ bench
           cryptoKey,
           value,
         );
-        const decrypted = await crypto.subtle.decrypt(
+        await crypto.subtle.decrypt(
           { name: 'AES-GCM', iv: nonce },
           cryptoKey,
           encrypted,
         );
-        cryptoSubtleResult += new TextDecoder().decode(decrypted);
       }
     },
   );

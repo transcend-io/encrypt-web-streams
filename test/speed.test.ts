@@ -80,3 +80,5 @@ bench
   );
 
 await bench.run();
+const table = bench.table();
+console.log(table);
