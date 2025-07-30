@@ -1,5 +1,5 @@
 {
-  "name": "@bencmbrook/aes_gcm_stream",
+  "name": "@bencmbrook/aes-gcm-stream-wasm",
   "version": "0.1.0-alpha.2",
   "private": false,
   "description": "WebAssembly-powered streaming AES-256-GCM implementation",
