@@ -1,6 +1,6 @@
 {
-  "name": "aes_gcm_stream",
-  "version": "0.1.0",
+  "name": "@bencmbrook/aes_gcm_stream",
+  "version": "0.1.0-alpha.1",
   "description": "WebAssembly-powered streaming AES-256-GCM implementation",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,7 +17,9 @@
   },
   "files": [
     "dist/",
-    "pkg/"
+    "pkg/aes_gcm_stream_wasm_bg.wasm",
+    "pkg/aes_gcm_stream_wasm.js",
+    "pkg/aes_gcm_stream_wasm.d.ts"
   ],
   "scripts": {
     "build": "npm run build:rust && npm run build:js",
