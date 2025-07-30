@@ -11,6 +11,7 @@
     "strict": true,
     "esModuleInterop": true,
     "strictNullChecks": true,
+    "resolveJsonModule": true,
     "checkJs": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
