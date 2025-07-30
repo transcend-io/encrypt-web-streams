@@ -1,8 +1,12 @@
-import initWasm, { Encryptor, Decryptor, type InitOutput } from "../pkg/aes_gcm_stream_wasm.js";
+import initWasm, {
+  Decryptor,
+  Encryptor,
+  type InitOutput,
+} from '../pkg/aes_gcm_stream_wasm.js';
 
-let _wasmReady: Promise<InitOutput> | null = null;
+let _wasmReady: Promise<InitOutput> | undefined;
 export function init() {
-  if (!_wasmReady) _wasmReady = initWasm();
+  _wasmReady ??= initWasm();
   return _wasmReady;
 }
 
@@ -12,7 +16,7 @@ export function init() {
 export function createEncryptStream(
   key: Uint8Array,
   nonce: Uint8Array,
-  adata?: Uint8Array
+  adata?: Uint8Array,
 ): TransformStream<Uint8Array, Uint8Array> {
   const enc = new Encryptor(key, nonce);
   if (adata) enc.init_adata(adata);
@@ -45,7 +49,7 @@ export function createEncryptStream(
 export function createDecryptStream(
   key: Uint8Array,
   nonce: Uint8Array,
-  adata?: Uint8Array
+  adata?: Uint8Array,
 ): TransformStream<Uint8Array, Uint8Array> {
   const dec = new Decryptor(key, nonce);
   if (adata) dec.init_adata(adata);

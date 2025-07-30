@@ -27,7 +27,13 @@
     "test:rust": "cd rust && wasm-pack test --node",
     "test:js": "web-test-runner --node-resolve",
     "clean": "rm -rf pkg/ target/ dist/ rust/target/",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "lint": "pnpm run --parallel --aggregate-output \"/^lint:*/\"",
+    "lint:prettier": "prettier --check . --log-level warn",
+    "lint:types": "tsc --noEmit",
+    "lint:test-types": "tsc --noEmit --project test/tsconfig.json",
+    "lint:eslint": "eslint .",
+    "format": "prettier --write ."
   },
   "keywords": [
     "aes",
@@ -41,11 +47,18 @@
   "author": "Ben Brook",
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.32.0",
     "@esm-bundle/chai": "4.3.4-fix.0",
+    "@tsconfig/node22": "^22.0.2",
+    "@tsconfig/strictest": "^2.0.5",
     "@types/node": "^22.x",
     "@web/dev-server-esbuild": "^1.0.4",
     "@web/test-runner": "^0.20.2",
+    "eslint": "^9.32.0",
+    "eslint-plugin-unicorn": "^60.0.0",
+    "prettier": "^3.6.2",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0"
   }
 }

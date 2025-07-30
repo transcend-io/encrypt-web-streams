@@ -1,0 +1,5 @@
+pnpm-lock.yaml
+pkg
+node_modules
+dist
+rust
