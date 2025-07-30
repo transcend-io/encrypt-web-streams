@@ -5,8 +5,4 @@
  * and decryption with a native TransformStream API.
  */
 
-export { init, createEncryptStream, createDecryptStream } from './stream.js';
-
-// Re-export types for convenience
-// Note: This will be available after building the Rust WASM module
-export type InitOutput = any; // Placeholder - will be properly typed after build 
+export { init, createEncryptStream, createDecryptStream } from './stream.js'; 

@@ -17,16 +17,24 @@ export function createEncryptStream(
   const enc = new Encryptor(key, nonce);
   if (adata) enc.init_adata(adata);
 
+  let hasData = false;
+
   return new TransformStream({
     transform(chunk, controller) {
       // ensure Uint8Array
       const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
       const out = enc.update(buf);
-      controller.enqueue(out);
+      hasData = true;
+      // Only enqueue if there's actual output
+      if (out.length > 0) {
+        controller.enqueue(out);
+      }
     },
     flush(controller) {
-      const final = enc.finalize();
-      controller.enqueue(final);
+      if (hasData) {
+        const final = enc.finalize();
+        controller.enqueue(final);
+      }
     },
   });
 }
@@ -42,16 +50,24 @@ export function createDecryptStream(
   const dec = new Decryptor(key, nonce);
   if (adata) dec.init_adata(adata);
 
+  let hasData = false;
+
   return new TransformStream({
     transform(chunk, controller) {
       const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
       const out = dec.update(buf);
-      controller.enqueue(out);
+      hasData = true;
+      // Only enqueue if there's actual output
+      if (out.length > 0) {
+        controller.enqueue(out);
+      }
     },
-    async flush(controller) {
-      // might throw on auth failure
-      const last = await dec.finalize();
-      controller.enqueue(last);
+    flush(controller) {
+      if (hasData) {
+        // might throw on auth failure
+        const last = dec.finalize();
+        controller.enqueue(last);
+      }
     },
   });
 }
