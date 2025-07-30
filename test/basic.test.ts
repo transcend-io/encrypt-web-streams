@@ -31,10 +31,8 @@ void it('should encrypt data directly with Encryptor', () => {
   const plaintext = new TextEncoder().encode('Hello, World!');
 
   const encryptor = new Encryptor(key, nonce);
-  const encrypted = encryptor.update(plaintext);
+  encryptor.update(plaintext);
   const final = encryptor.finalize();
-
-  console.log(encrypted, final);
 
   // The update method might return empty data (buffering), but finalize should produce output
   assert.ok(final.length > 0, 'Should produce final encrypted data');

@@ -1,3 +1,4 @@
+/** @type {import('prettier').Config} */
 const prettierConfig = {
   singleQuote: true,
 };
