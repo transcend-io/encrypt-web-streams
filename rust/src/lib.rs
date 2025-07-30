@@ -1,8 +1,8 @@
-use wasm_bindgen::prelude::*;
 use aes_gcm_stream::{
-    Aes256GcmStreamEncryptor,   // streaming encryptor (new, update, finalize)  [oai_citation:0‡Docs.rs](https://docs.rs/aes-gcm-stream/latest/aes_gcm_stream/struct.Aes256GcmStreamEncryptor.html)
-    Aes256GcmStreamDecryptor,   // streaming decryptor (new, update, finalize)  [oai_citation:1‡Docs.rs](https://docs.rs/aes-gcm-stream/latest/aes_gcm_stream/struct.Aes256GcmStreamDecryptor.html)
+    Aes256GcmStreamDecryptor, // streaming decryptor (new, update, finalize)  [oai_citation:1‡Docs.rs](https://docs.rs/aes-gcm-stream/latest/aes_gcm_stream/struct.Aes256GcmStreamDecryptor.html)
+    Aes256GcmStreamEncryptor, // streaming encryptor (new, update, finalize)  [oai_citation:0‡Docs.rs](https://docs.rs/aes-gcm-stream/latest/aes_gcm_stream/struct.Aes256GcmStreamEncryptor.html)
 };
+use wasm_bindgen::prelude::*;
 
 /// Streaming AES-256-GCM encryptor.
 #[wasm_bindgen]
@@ -81,8 +81,6 @@ impl Decryptor {
     /// Finalize: checks tag and returns any remaining plaintext or errors.
     #[wasm_bindgen]
     pub fn finalize(&mut self) -> Result<Vec<u8>, JsValue> {
-        self.inner
-            .finalize()
-            .map_err(|e| JsValue::from_str(&e))
+        self.inner.finalize().map_err(|e| JsValue::from_str(&e))
     }
 }

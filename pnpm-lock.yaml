@@ -20,9 +20,6 @@ importers:
       '@tsconfig/strictest':
         specifier: ^2.0.5
         version: 2.0.5
-      '@types/node':
-        specifier: ^22.x
-        version: 22.17.0
       '@web/dev-server-esbuild':
         specifier: ^1.0.4
         version: 1.0.4
