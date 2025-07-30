@@ -39,13 +39,6 @@ void it('should decrypt fixtures', async () => {
     if (fixture.url === '/files/encrypted/big.zip.enc') {
       continue;
     }
-    // Skip large files for now to avoid timeouts
-    if (fixture.size !== undefined && fixture.size > 1_000_000) {
-      console.log(
-        `Skipping large file: ${fixture.url} (${String(fixture.size)} bytes)`,
-      );
-      continue;
-    }
     // Get encrypted fixture
     const response = await fetch(`fixtures/${fixture.url}`);
     const sourceStream = response.body;
@@ -56,35 +49,16 @@ void it('should decrypt fixtures', async () => {
     // Decrypt fixture
     const decryptionInfo = getDecryptionInfo(fixture);
 
-    // Read the entire ciphertext and append the auth tag
-    const ciphertextArrayBuffer = await response.arrayBuffer();
-    const ciphertext = new Uint8Array(ciphertextArrayBuffer);
-
-    // Create a new array with ciphertext + auth tag
-    const ciphertextWithTag = new Uint8Array(
-      ciphertext.length + decryptionInfo.authTag.length,
-    );
-    ciphertextWithTag.set(ciphertext);
-    ciphertextWithTag.set(decryptionInfo.authTag, ciphertext.length);
-
-    // Create a stream from the combined data
-    const combinedStream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(ciphertextWithTag);
-        controller.close();
-      },
-    });
-
     const decryptStream = createDecryptStream(
       decryptionInfo.key,
       decryptionInfo.nonce,
+      decryptionInfo.authTag, // authTag
     );
 
     const decryptedResponse = new Response(
-      combinedStream.pipeThrough(decryptStream),
+      sourceStream.pipeThrough(decryptStream),
     );
 
-    // TODO: Failed to fetch
     let blob: Blob;
     try {
       blob = await decryptedResponse.blob();
