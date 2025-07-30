@@ -50,6 +50,9 @@
   ],
   "author": "Ben Brook",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@esm-bundle/chai": "4.3.4-fix.0",
