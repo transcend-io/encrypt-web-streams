@@ -16,11 +16,16 @@ const REMOTE_FIXTURES_BASE_PATHNAME =
 
 // Features
 const FF_LOCAL_MODE = true as boolean;
-const FF_SKIP_BIG_FIXTURES = false as boolean;
+const FF_BIG_FIXTURES = 'skip' as 'include' | 'skip' | 'only';
 
 // Test fixtures
-const fixtures = fixturesJson.filter(
-  (fixture) => !FF_SKIP_BIG_FIXTURES || !fixture.filePrefix.includes('big'),
+const fixtures = fixturesJson.filter((fixture) =>
+  FF_BIG_FIXTURES === 'include'
+    ? true
+    : // eslint-disable-next-line unicorn/no-nested-ternary
+      FF_BIG_FIXTURES === 'skip'
+      ? !fixture.filePrefix.includes('big')
+      : fixture.filePrefix.includes('big'),
 ) as Fixture[];
 const fixturesBasePathname = FF_LOCAL_MODE
   ? LOCAL_FIXTURES_BASE_PATHNAME
@@ -55,10 +60,6 @@ function getDecryptionInfo(fixture: Fixture) {
 
 for (const fixture of fixtures) {
   await it(`should decrypt ${fixture.filePrefix}`, async () => {
-    // if (!fixture.filePrefix.includes('big')) {
-    //   return;
-    // }
-
     const url = `${fixturesBasePathname}${fixture.url}`;
 
     // Get encrypted fixture
@@ -80,18 +81,30 @@ for (const fixture of fixtures) {
     const sha256 = await createSHA256();
     sha256.init();
 
-    const decryptedChecksumHex = await new Promise<string>((resolve) => {
-      void sourceStream.pipeThrough(decryptStream).pipeTo(
-        new WritableStream({
-          write(chunk) {
-            sha256.update(chunk);
-          },
-          close() {
-            resolve(sha256.digest('hex'));
-          },
-        }),
-      );
-    });
+    const decryptedChecksumHex = await new Promise<string>(
+      (resolve, reject) => {
+        void sourceStream.pipeThrough(decryptStream).pipeTo(
+          new WritableStream({
+            write(chunk) {
+              sha256.update(chunk);
+            },
+            close() {
+              resolve(sha256.digest('hex'));
+            },
+            abort(reason) {
+              reject(
+                reason instanceof Error
+                  ? reason
+                  : // eslint-disable-next-line unicorn/no-nested-ternary
+                    typeof reason === 'string'
+                    ? new Error(reason)
+                    : new Error('Unknown error'),
+              );
+            },
+          }),
+        );
+      },
+    );
 
     assert.equal(decryptedChecksumHex, fixture.unencryptedChecksum);
   });
