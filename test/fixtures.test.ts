@@ -59,7 +59,8 @@ function getDecryptionInfo(fixture: Fixture) {
 }
 
 for (const fixture of fixtures) {
-  void it(`should decrypt ${fixture.filePrefix}`, async () => {
+  await it(`should decrypt ${fixture.filePrefix}`, async () => {
+    console.log('fixture', fixture.filePrefix);
     const url = `${fixturesBasePathname}${fixture.url}`;
 
     // Get encrypted fixture
@@ -92,14 +93,8 @@ for (const fixture of fixtures) {
               resolve(sha256.digest('hex'));
             },
             abort(reason) {
-              reject(
-                reason instanceof Error
-                  ? reason
-                  : // eslint-disable-next-line unicorn/no-nested-ternary
-                    typeof reason === 'string'
-                    ? new Error(reason)
-                    : new Error('Unknown error'),
-              );
+              const error = new Error('Stream was aborted', { cause: reason });
+              reject(error);
             },
           }),
         );

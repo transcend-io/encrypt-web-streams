@@ -30,6 +30,7 @@
     "test:rust": "cd rust && wasm-pack test --node",
     "test:js": "web-test-runner --node-resolve --playwright --browsers chromium firefox webkit --files test/**/*.test.ts --files !test/speed.test.ts",
     "test:fixtures": "pnpm run build && web-test-runner --node-resolve --playwright --browsers chromium --files test/fixtures.test.ts",
+    "rebuild-fixtures": "tsx fixtures/rebuild-fixtures.ts",
     "benchmark": "web-test-runner --node-resolve --playwright --browsers chromium firefox webkit --files test/speed.test.ts",
     "clean": "rm -rf pkg/ target/ dist/ rust/target/",
     "prepublishOnly": "npm run build",

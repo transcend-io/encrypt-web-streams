@@ -28,7 +28,7 @@ export interface Fixture {
   unencryptedChecksum: string;
 }
 
-const thisDirname = __dirname;
+const thisDirname = path.dirname(new URL(import.meta.url).pathname);
 
 /**
  * Fixtures which are not local, but hosted at https://fixtures-for-conflux-and-penumbra.s3.us-east-1.amazonaws.com
