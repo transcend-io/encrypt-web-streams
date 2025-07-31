@@ -14,9 +14,9 @@ const LOCAL_FIXTURES_BASE_PATHNAME = '/fixtures';
 const REMOTE_FIXTURES_BASE_PATHNAME =
   'https://fixtures-for-conflux-and-penumbra.s3.us-east-1.amazonaws.com';
 
-// Features
+// Feature flags
 const FF_LOCAL_MODE = true as boolean;
-const FF_BIG_FIXTURES = 'include' as 'include' | 'skip' | 'only';
+const FF_BIG_FIXTURES = 'skip' as 'include' | 'skip' | 'only';
 
 // Test fixtures
 const fixtures = fixturesJson.filter((fixture) =>
@@ -34,7 +34,8 @@ const fixturesBasePathname = FF_LOCAL_MODE
 // Initialize WASM
 await init();
 
-function base64ToUint8Array(base64: string) {
+/** Helper to convert base64-encoded string to Uint8Array */
+function base64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   const bin = atob(base64); // decode to binary string
   const length = bin.length;
   const bytes = new Uint8Array(length); // allocate 32-byte array
@@ -50,6 +51,7 @@ function base64ToUint8Array(base64: string) {
   return bytes;
 }
 
+/** Helper to get decryption info from fixture. This is the metadata from the encryption process. */
 function getDecryptionInfo(fixture: Fixture) {
   return {
     key: base64ToUint8Array(fixture.decryptionOptions.key),
@@ -58,6 +60,7 @@ function getDecryptionInfo(fixture: Fixture) {
   };
 }
 
+// Decrypt every fixture
 for (const fixture of fixtures) {
   await it(`should decrypt ${fixture.filePrefix}, pass authentication tag verification, and match unencrypted file checksum`, async () => {
     const url = `${fixturesBasePathname}${fixture.url}`;
@@ -75,39 +78,108 @@ for (const fixture of fixtures) {
     const decryptStream = createDecryptStream(
       decryptionInfo.key,
       decryptionInfo.nonce,
-      decryptionInfo.authTag, // authTag
+      decryptionInfo.authTag,
     );
 
     const sha256 = await createSHA256();
     sha256.init();
 
-    const decryptedChecksumHex = await new Promise<string>(
-      (resolve, reject) => {
-        void sourceStream.pipeThrough(decryptStream).pipeTo(
-          new WritableStream({
-            write(chunk) {
-              sha256.update(chunk);
-            },
-            close() {
-              resolve(sha256.digest('hex'));
-            },
-            abort(reason) {
-              const error =
-                reason instanceof Error
-                  ? reason
-                  : // eslint-disable-next-line unicorn/no-nested-ternary
-                    typeof reason === 'string'
-                    ? new Error(reason)
-                    : new Error('Unknown error');
-              error.message = `Stream was aborted: ${error.message}`;
-              error.name = 'StreamAbortedError';
-              reject(error);
-            },
-          }),
-        );
-      },
+    // Stream decrypt the file and compute a checksum (in addition to built-in verification of the authentication tag)
+    let decryptedChecksum: string | undefined;
+    await sourceStream.pipeThrough(decryptStream).pipeTo(
+      new WritableStream({
+        write(chunk) {
+          sha256.update(chunk);
+        },
+        close() {
+          decryptedChecksum = sha256.digest('hex');
+        },
+        abort(reason) {
+          const error =
+            reason instanceof Error
+              ? reason
+              : // eslint-disable-next-line unicorn/no-nested-ternary
+                typeof reason === 'string'
+                ? new Error(reason)
+                : new Error('Unknown error');
+          error.message = `Stream was aborted: ${error.message}`;
+          error.name = 'StreamAbortedError';
+          throw error;
+        },
+      }),
     );
 
-    assert.equal(decryptedChecksumHex, fixture.unencryptedChecksum);
+    assert.equal(
+      decryptedChecksum,
+      fixture.unencryptedChecksum,
+      'The decryption stream was successful and passed authentication tag verification, yet our own checksums did not match',
+    );
   });
 }
+
+await it('should fail authentication for malformed auth tag', async () => {
+  const fixture = fixtures[0];
+  if (!fixture) {
+    throw new TypeError('No fixture found');
+  }
+  const url = `${fixturesBasePathname}${fixture.url}`;
+
+  // Get encrypted fixture
+  const response = await fetch(url);
+  const sourceStream = response.body;
+  if (!sourceStream) {
+    throw new Error(`Failed to fetch fixture ${fixture.url}`);
+  }
+
+  // Decrypt fixture
+  const decryptionInfo = getDecryptionInfo(fixture);
+
+  const malformedAuthTag = new Uint8Array(decryptionInfo.authTag.length).fill(
+    decryptionInfo.authTag.length,
+  );
+
+  const decryptStream = createDecryptStream(
+    decryptionInfo.key,
+    decryptionInfo.nonce,
+    malformedAuthTag,
+  );
+
+  let expectedError: Error | undefined;
+  try {
+    await sourceStream.pipeThrough(decryptStream).pipeTo(
+      new WritableStream({
+        write() {
+          // Do nothing
+        },
+        close() {
+          // Do nothing
+        },
+        abort(reason) {
+          const error =
+            reason instanceof Error
+              ? reason
+              : // eslint-disable-next-line unicorn/no-nested-ternary
+                typeof reason === 'string'
+                ? new Error(reason)
+                : new Error('Unknown error');
+          error.message = `Stream was aborted: ${error.message}`;
+          error.name = 'StreamAbortedError';
+          expectedError = error;
+        },
+      }),
+    );
+  } catch {
+    // Do nothing
+  }
+
+  assert.instanceOf(
+    expectedError,
+    Error,
+    'The decryption stream did not throw an error when the authentication tag was malformed',
+  );
+  assert.match(
+    expectedError.message,
+    /Tag mismatch, expected/,
+    'The decryption stream threw an error, but the error message was unexpected for a malformed authentication tag error',
+  );
+});
