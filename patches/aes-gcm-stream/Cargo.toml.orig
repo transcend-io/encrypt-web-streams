@@ -1,0 +1,23 @@
+[package]
+name = "aes-gcm-stream"
+version = "0.2.4"
+edition = "2021"
+authors = ["Hatter Jiang"]
+repository = "https://git.hatter.ink/hatter/aes-gcm-stream"
+description = "AES GCM stream encrypt and decrypt library, supports AES128/192/256 bit keys"
+license = "MIT OR Apache-2.0"
+keywords = ["crypto", "aes", "gcm", "stream"]
+categories = ["cryptography"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aes = { version = "0.8", features = ["zeroize"] }
+cipher = "0.4"
+ghash = "0.5"
+zeroize = { version = "1.6", features = ["zeroize_derive"] }
+
+[dev-dependencies]
+hex = "0.4"
+benchmark-simple = "0.1"
+aes-gcm = { version = "0.10", features = ["zeroize"] }
