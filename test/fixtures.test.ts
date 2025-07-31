@@ -59,7 +59,7 @@ function getDecryptionInfo(fixture: Fixture) {
 }
 
 for (const fixture of fixtures) {
-  await it(`should decrypt ${fixture.filePrefix}`, async () => {
+  void it(`should decrypt ${fixture.filePrefix}`, async () => {
     const url = `${fixturesBasePathname}${fixture.url}`;
 
     // Get encrypted fixture

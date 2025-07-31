@@ -83,7 +83,9 @@ export function createDecryptStream(
         }
         // might throw on auth failure
         const last = dec.finalize();
-        controller.enqueue(last);
+        if (last.length > 0) {
+          controller.enqueue(last);
+        }
       }
     },
   });
