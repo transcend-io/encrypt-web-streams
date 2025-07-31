@@ -75,7 +75,6 @@ export function createDecryptStream(
     flush(controller) {
       if (hasData) {
         if (authTag) {
-          console.log('authTag', authTag);
           // Append the auth tag as the final chunk
           const out = dec.update(authTag);
           if (out.length > 0) {
@@ -85,7 +84,6 @@ export function createDecryptStream(
         // might throw on auth failure
         const last = dec.finalize();
         if (last.length > 0) {
-          console.log('last', last);
           controller.enqueue(last);
         }
       }
