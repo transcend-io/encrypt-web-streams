@@ -8,6 +8,9 @@ node_modules/
 dist/
 .tsbuildinfo
 
+# Testing
+fixtures/files/**/*big*
+
 # OS
 .DS_Store
 Thumbs.db
@@ -26,9 +29,6 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
-
-# nyc test coverage
-.nyc_output
 
 # Dependency directories
 node_modules/

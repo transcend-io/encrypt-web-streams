@@ -1,15 +1,32 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import { assert } from '@esm-bundle/chai';
 import fixturesJson from '../fixtures/files/fixtures.json' with { type: 'json' };
 import { createDecryptStream, init } from '../src/index.js';
 import type { Fixture } from '../fixtures/rebuild-fixtures.js';
 import { createSHA256 } from 'hash-wasm';
 
-declare function it(name: string, callback: () => void): Promise<void> | void;
-const fixtures = fixturesJson as Fixture[];
-const REMOTE_FIXTURES_URL =
+declare function it(
+  name: string,
+  callback: () => Promise<void>,
+): Promise<void> | void;
+
+// Constants
+const LOCAL_FIXTURES_BASE_PATHNAME = '/fixtures';
+const REMOTE_FIXTURES_BASE_PATHNAME =
   'https://fixtures-for-conflux-and-penumbra.s3.us-east-1.amazonaws.com';
 
+// Features
+const FF_LOCAL_MODE = true as boolean;
+const FF_SKIP_BIG_FIXTURES = false as boolean;
+
+// Test fixtures
+const fixtures = fixturesJson.filter(
+  (fixture) => !FF_SKIP_BIG_FIXTURES || !fixture.filePrefix.includes('big'),
+) as Fixture[];
+const fixturesBasePathname = FF_LOCAL_MODE
+  ? LOCAL_FIXTURES_BASE_PATHNAME
+  : REMOTE_FIXTURES_BASE_PATHNAME;
+
+// Initialize WASM
 await init();
 
 function base64ToUint8Array(base64: string) {
@@ -36,17 +53,13 @@ function getDecryptionInfo(fixture: Fixture) {
   };
 }
 
-void it('should decrypt fixtures', async () => {
-  for (const fixture of fixtures) {
-    if (fixture.url === '/files/encrypted/big.zip.enc') {
-      // TODO: debug checksum mismatch
-      continue;
-    }
+for (const fixture of fixtures) {
+  await it(`should decrypt ${fixture.filePrefix}`, async () => {
+    // if (!fixture.filePrefix.includes('big')) {
+    //   return;
+    // }
 
-    const url =
-      fixture.url === '/files/encrypted/big.zip.enc'
-        ? `${REMOTE_FIXTURES_URL}/files/encrypted/big.zip.enc`
-        : `fixtures/${fixture.url}`;
+    const url = `${fixturesBasePathname}${fixture.url}`;
 
     // Get encrypted fixture
     const response = await fetch(url);
@@ -81,5 +94,5 @@ void it('should decrypt fixtures', async () => {
     });
 
     assert.equal(decryptedChecksumHex, fixture.unencryptedChecksum);
-  }
-});
+  });
+}
