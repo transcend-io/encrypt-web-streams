@@ -52,7 +52,7 @@ const REMOTE_FIXTURES: Fixture[] = [
  * Rebuild the files.js file to use the local server.
  */
 async function main(): Promise<void> {
-  const fixtures: Fixture[] = [];
+  let fixtures: Fixture[] = [];
   const directory = await readdir(path.join(thisDirname, '/files/unencrypted'));
 
   // Clear out encrypted folder
@@ -120,7 +120,14 @@ async function main(): Promise<void> {
   }
 
   // Add remote fixtures
-  fixtures.push(...REMOTE_FIXTURES);
+  fixtures.push(
+    ...REMOTE_FIXTURES.filter(
+      (f) => !fixtures.some((f2) => f2.filePrefix === f.filePrefix),
+    ),
+  );
+
+  // Sort by file size (ascending)
+  fixtures = fixtures.sort((a, b) => (a.size ?? 0) - (b.size ?? 0));
 
   await writeFile(
     path.join(thisDirname, 'files/fixtures.json'),

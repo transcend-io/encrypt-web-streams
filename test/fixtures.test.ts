@@ -93,7 +93,15 @@ for (const fixture of fixtures) {
               resolve(sha256.digest('hex'));
             },
             abort(reason) {
-              const error = new Error('Stream was aborted', { cause: reason });
+              const error =
+                reason instanceof Error
+                  ? reason
+                  : // eslint-disable-next-line unicorn/no-nested-ternary
+                    typeof reason === 'string'
+                    ? new Error(reason)
+                    : new Error('Unknown error');
+              error.message = `Stream was aborted: ${error.message}`;
+              error.name = 'StreamAbortedError';
               reject(error);
             },
           }),
