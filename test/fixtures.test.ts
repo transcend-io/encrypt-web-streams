@@ -16,7 +16,7 @@ const REMOTE_FIXTURES_BASE_PATHNAME =
 
 // Features
 const FF_LOCAL_MODE = true as boolean;
-const FF_BIG_FIXTURES = 'skip' as 'include' | 'skip' | 'only';
+const FF_BIG_FIXTURES = 'include' as 'include' | 'skip' | 'only';
 
 // Test fixtures
 const fixtures = fixturesJson.filter((fixture) =>

@@ -96,9 +96,6 @@ mod tests {
             76, 28, 183, 215, 144, 231, 3, 196, 242, 86, 134, 113, 99,
         ];
         let nonce = [234, 83, 84, 251, 107, 241, 39, 14, 146, 22, 11, 30];
-        let auth_tag = [
-            167, 55, 52, 35, 238, 229, 16, 11, 101, 35, 239, 207, 138, 106, 162, 54,
-        ];
 
         // Create a large test file (simulate the big.zip issue)
         let large_data = vec![0u8; 100 * 1024 * 1024]; // 100MB of zeros
@@ -122,18 +119,12 @@ mod tests {
         let mut decryptor = Aes256GcmStreamDecryptor::new(key, &nonce);
         let mut decrypted_data = Vec::new();
 
-        // Process encrypted data in chunks, excluding the auth tag
-        let ciphertext_len = encrypted_data.len() - 16; // Remove auth tag
-        let ciphertext = &encrypted_data[..ciphertext_len];
-
-        for chunk in ciphertext.chunks(chunk_size) {
+        // Process all encrypted data (including the tag) through update
+        for chunk in encrypted_data.chunks(chunk_size) {
             decrypted_data.extend_from_slice(&decryptor.update(chunk));
         }
 
-        // Add the auth tag
-        decryptor.update(&auth_tag);
-
-        // Finalize
+        // Finalize - the tag is already in the message buffer
         match decryptor.finalize() {
             Ok(last) => {
                 decrypted_data.extend_from_slice(&last);
@@ -190,16 +181,12 @@ mod tests {
         let mut decryptor = Aes256GcmStreamDecryptor::new(key, &nonce);
         let mut decrypted_data = Vec::new();
 
-        let ciphertext_len = encrypted_data.len() - 16;
-        let ciphertext = &encrypted_data[..ciphertext_len];
-
-        for chunk in ciphertext.chunks(chunk_size) {
+        // Process all encrypted data (including the tag) through update
+        for chunk in encrypted_data.chunks(chunk_size) {
             decrypted_data.extend_from_slice(&decryptor.update(chunk));
         }
 
-        // Add the auth tag
-        decryptor.update(&tag);
-
+        // Finalize - the tag is already in the message buffer
         match decryptor.finalize() {
             Ok(last) => {
                 decrypted_data.extend_from_slice(&last);
