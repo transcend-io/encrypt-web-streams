@@ -19,8 +19,8 @@ macro_rules! define_aes_gcm_stream_encryptor_impl {
             ghash: GHash,
             init_nonce: u128,
             encryption_nonce: u128,
-            adata_len: usize,
-            message_len: usize,
+            adata_len: u64,
+            message_len: u64,
         }
 
         impl $module {
@@ -50,7 +50,7 @@ macro_rules! define_aes_gcm_stream_encryptor_impl {
 
             pub fn init_adata(&mut self, adata: &[u8]) {
                 if adata.len() > 0 {
-                    self.adata_len += adata.len();
+                    self.adata_len += adata.len() as u64;
                     self.ghash.update_padded(adata);
                 }
             }
@@ -81,7 +81,7 @@ macro_rules! define_aes_gcm_stream_encryptor_impl {
                 }
                 self.ghash.update_padded(&encrypted_message);
                 self.message_buffer = message_buffer_slice[blocks_count * BLOCK_SIZE..].to_vec();
-                self.message_len += encrypted_message.len();
+                self.message_len += encrypted_message.len() as u64;
 
                 encrypted_message
             }
@@ -101,12 +101,14 @@ macro_rules! define_aes_gcm_stream_encryptor_impl {
                     final_encrypted_message
                         .extend_from_slice(&y.to_be_bytes()[16 - chunk.len()..16]);
                     self.ghash.update_padded(&final_encrypted_message);
-                    self.message_len += final_encrypted_message.len();
+                    self.message_len += final_encrypted_message.len() as u64;
                 }
-                let adata_bit_len = (self.adata_len as u64)
+                let adata_bit_len = self
+                    .adata_len
                     .checked_mul(8)
                     .expect("Associated data is too large");
-                let message_bit_len = (self.message_len as u64)
+                let message_bit_len = self
+                    .message_len
                     .checked_mul(8)
                     .expect("Message is too large");
                 let mut adata_and_message_len = Vec::with_capacity(BLOCK_SIZE);
