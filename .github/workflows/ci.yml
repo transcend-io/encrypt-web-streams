@@ -7,9 +7,8 @@ on:
   pull_request:
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,20 +25,100 @@ jobs:
       - name: Install pnpm dependencies
         run: pnpm install
 
-      - name: Install Playwright browsers
-        run: pnpm dlx playwright install --with-deps
+      - name: Cache fixtures
+        id: cache-fixtures
+        uses: actions/cache@v4
+        with:
+          path: |
+            test/fixtures/files/encrypted/
+            test/fixtures/files/fixtures.json
+            test/fixtures/files/unencrypted/big*.dat
+          key: ${{ runner.os }}-fixtures-${{ hashFiles('test/fixtures/**/*.ts', 'test/fixtures/files/unencrypted/**/*', '!test/fixtures/files/unencrypted/big*.dat') }}
+
+      - name: Rebuild fixtures
+        if: steps.cache-fixtures.outputs.cache-hit != 'true'
+        run: pnpm run rebuild-fixtures
 
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Rebuild fixtures
-        run: pnpm run rebuild-fixtures
+      - name: Cache rust target directory
+        uses: actions/cache@v4
+        with:
+          path: rust/target
+          key: ${{ runner.os }}-cargo-target-${{ hashFiles('rust/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-
 
-      - name: Run Rust tests
-        run: pnpm exec test:rust
+      - name: Build
+        run: pnpm build
 
-      - name: Run JavaScript tests
-        run: pnpm exec test:js
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-and-fixtures
+          path: |
+            dist/
+            wasm/
+            test/fixtures/
 
-      - name: Run fixtures tests
-        run: pnpm exec test:fixtures
+  test:
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - test_name: rust
+            test_command: pnpm run test:rust:ci
+            needs_rust: true
+            needs_playwright: false
+          - test_name: js
+            test_command: pnpm run test:js:ci
+            needs_rust: false
+            needs_playwright: true
+          - test_name: fixtures
+            test_command: pnpm run test:fixtures:ci
+            needs_rust: false
+            needs_playwright: true
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install pnpm dependencies
+        run: pnpm install
+
+      - name: Setup Rust
+        if: ${{ matrix.needs_rust }}
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Restore rust target cache
+        if: ${{ matrix.needs_rust }}
+        uses: actions/cache@v4
+        with:
+          path: rust/target
+          key: ${{ runner.os }}-cargo-target-${{ hashFiles('rust/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-
+
+      - name: Install Playwright browsers
+        if: ${{ matrix.needs_playwright }}
+        run: pnpm dlx playwright install --with-deps
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-and-fixtures
+          path: .
+
+      - name: Run tests (${{ matrix.test_name }})
+        run: ${{ matrix.test_command }}
