@@ -17,23 +17,12 @@ async function streamToUint8Array(
 }
 
 function createReadableStream(data: Uint8Array): ReadableStream<Uint8Array> {
-  function* chunkIterator(desiredSize: number) {
-    for (let index = 0; index < data.length; index += desiredSize) {
-      yield data.slice(index, index + desiredSize);
-    }
-  }
-  let iterator: Generator<Uint8Array, void, unknown> | undefined;
   return new ReadableStream({
-    pull(controller) {
-      const { desiredSize } = controller;
-
-      iterator ??= chunkIterator(desiredSize ?? 1024);
-      const { value, done } = iterator.next();
-      if (done) {
-        controller.close();
-      } else {
-        controller.enqueue(value);
+    start(controller) {
+      for (let index = 0; index < data.length; index += 1024) {
+        controller.enqueue(data.slice(index, index + 1024));
       }
+      controller.close();
     },
   });
 }
@@ -116,6 +105,29 @@ it('when encrypting and decrypting 0 bytes of data, the decrypted data should ha
   const key = new Uint8Array(32).fill(1);
   const iv = new Uint8Array(12).fill(2);
   const unencryptedData = new Uint8Array(0);
+
+  const decryptedData = await streamToUint8Array(
+    createReadableStream(unencryptedData)
+      .pipeThrough(createEncryptStream(key, iv, false))
+      .pipeThrough(createDecryptStream(key, iv)),
+  );
+
+  assert.strictEqual(
+    decryptedData.length,
+    unencryptedData.length,
+    'Decrypted data should have same length as unencrypted data',
+  );
+  assert.deepStrictEqual(
+    decryptedData,
+    unencryptedData,
+    'Decrypted data should match unencrypted data',
+  );
+});
+
+it('should encrypt and decrypt several chunks of data of varying sizes', async () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
+  const unencryptedData = new Uint8Array(1024 * 8 + 5).fill(1);
 
   const decryptedData = await streamToUint8Array(
     createReadableStream(unencryptedData)
