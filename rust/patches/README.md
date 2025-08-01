@@ -4,16 +4,21 @@ This directory contains patched versions of dependencies that are applied using 
 
 ## aes-gcm-stream
 
-**Original version:** 0.2.4  
+**Original version:** 0.2.4
 **Patched version:** Local copy with overflow protection
 
 ### Changes Applied
 
-1. **Overflow Protection in `encryptor.rs`** (lines ~104-105):
+1. **Large File Support (Over 4GB)**:
+   - Changed `adata_len` and `message_len` from `usize` to `u64` in both `encryptor.rs` and `decryptor.rs`.
+   - This prevents integer overflow on 32-bit systems (like Wasm) when processing files larger than 4GB.
+   - All additions to these counters are now cast to `u64`.
+
+2. **Overflow Protection in `encryptor.rs`** (lines ~104-105):
    - Replaced simple multiplication with `checked_mul` to prevent integer overflow
    - Added `expect()` calls to handle overflow cases (since the function returns a tuple, not a Result)
 
-2. **Overflow Protection in `decryptor.rs`** (lines ~108-109):
+3. **Overflow Protection in `decryptor.rs`** (lines ~108-109):
    - Replaced simple multiplication with `checked_mul` to prevent integer overflow
    - Added proper error handling with `?` operator for large associated data and message sizes
 
@@ -31,10 +36,12 @@ This was replaced with:
 **For encryptor.rs (returns `(Vec<u8>, Vec<u8>)`):**
 
 ```rust
-let adata_bit_len = (self.adata_len as u64)
+let adata_bit_len = self
+    .adata_len
     .checked_mul(8)
     .expect("Associated data is too large");
-let message_bit_len = (self.message_len as u64)
+let message_bit_len = self
+    .message_len
     .checked_mul(8)
     .expect("Message is too large");
 ```
@@ -42,10 +49,12 @@ let message_bit_len = (self.message_len as u64)
 **For decryptor.rs (returns `Result<Vec<u8>, String>`):**
 
 ```rust
-let adata_bit_len = (self.adata_len as u64)
+let adata_bit_len = self
+    .adata_len
     .checked_mul(8)
     .ok_or_else(|| "Associated data is too large".to_string())?;
-let message_bit_len = (self.message_len as u64)
+let message_bit_len = self
+    .message_len
     .checked_mul(8)
     .ok_or_else(|| "Message is too large".to_string())?;
 ```

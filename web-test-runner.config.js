@@ -1,6 +1,6 @@
 import { esbuildPlugin } from '@web/dev-server-esbuild';
 
-const timeout = 5 * 60 * 1000; // 5 minutes
+const timeout = 5 * 60 * 1000;
 
 /** @type {import('@web/test-runner').TestRunnerConfig} */
 export default {

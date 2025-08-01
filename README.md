@@ -1,6 +1,6 @@
 # aes_gcm_stream
 
-A WebAssembly-powered, truly streaming AES-256-GCM implementation for Node.js and the web. This library wraps the Rust [`aes-gcm-stream`](https://lib.rs/crates/aes-gcm-stream) crate and provides both direct WASM bindings and a streaming API.
+A WebAssembly-powered, truly streaming AES-256-GCM implementation for Node.js and the web. This library wraps the Rust [`aes-gcm-stream`](https://lib.rs/crates/aes-gcm-stream) crate and provides both direct Wasm bindings and a streaming API.
 
 ## Features
 
@@ -40,7 +40,7 @@ import {
 
 #### JS API
 
-- `init(): Promise<InitOutput>` — asynchronously loads the WASM module (Node.js build auto-initializes)
+- `init(): Promise<InitOutput>` — asynchronously loads the Wasm module (Node.js build auto-initializes)
 - `createEncryptStream(key, nonce, adata?)` — returns a `TransformStream` encrypting each chunk
 - `createDecryptStream(key, nonce, adata?)` — returns a `TransformStream` decrypting and verifying each chunk
 
@@ -108,7 +108,7 @@ This project uses Rust for the WebAssembly module and TypeScript for the JavaScr
 # Install project dependencies
 pnpm install
 
-# Build the Rust WASM module and TypeScript
+# Build the Rust Wasm module and TypeScript
 pnpm build
 ```
 
@@ -132,6 +132,22 @@ pnpm test:fixtures
 pnpm test:rust
 ```
 
-## Stats
+## Performance
 
-- 59.4 MB/s on a 6.3GB file on M3 Pro
+Run `pnpm benchmark` to see the speed of the implementation and compare it against WebCrypto (but note that WebCrypto cannot stream, so it's not a perfect comparison).
+
+On M3 Pro in Chromium (i.e., Chrome), this implementation decrypts a 6.3GB file at 59.4 MB/s with 3 MB of memory usage.
+
+Webkit (i.e., Safari) performs similarly. Firefox runs much slower.
+
+## Supporting Large Files
+
+First, you should avoid buffering data in memory in your implementation, meaning: (A) don't push chunks onto an array, and (B) don't call `new Blob(decryptionStream)`. You should stream the data end-to-end.
+
+Second, there are volumes of data for which counting the volume of data itself becomes a problem. In JavaScript, counting bits will overflow at a 1.13 PB file.
+
+In Wasm, it's a bit more complicated. The Rust crate, `aes-gcm-stream`, originally used `usize` bit counters, which in Wasm is `u32`, and thus the bit counter overflowed at 536 MB. This repo patches that crate to use `u64` for the counter, meaning the theoretical maximum file size is 2^64 bytes, or 16 EB. Using this in Wasm requires similar attention to any counters you implement.
+
+However, some browsers may have built-in counters which will fail when streaming large amounts of data.
+
+In general, staying under 4.29 GB per file is the safest guarantee for wide browser support.
