@@ -37,7 +37,7 @@ Provides TransformStreams for AES-256-GCM encryption and decryption.
 import {
   init,
   createEncryptionStream,
-  createDecryptStream,
+  createDecryptionStream,
 } from '@bencmbrook/aes_gcm_stream';
 ```
 
@@ -45,7 +45,7 @@ import {
 
 - `init(): Promise<InitOutput>` — asynchronously loads the Wasm module (Node.js build auto-initializes)
 - `createEncryptionStream(key, iv, options?)` — returns a `TransformStream` that encrypts each chunk
-- `createDecryptStream(key, iv, options?)` — returns a `TransformStream` that decrypts and verifies each chunk
+- `createDecryptionStream(key, iv, options?)` — returns a `TransformStream` that decrypts and verifies each chunk
 
 ## Streaming Usage
 
@@ -53,7 +53,7 @@ import {
 import {
   init,
   createEncryptionStream,
-  createDecryptStream,
+  createDecryptionStream,
 } from '@bencmbrook/aes_gcm_stream';
 
 await init();
@@ -62,7 +62,7 @@ const key = crypto.getRandomValues(new Uint8Array(32));
 const iv = crypto.getRandomValues(new Uint8Array(12));
 
 const encryptionStream = createEncryptionStream(key, iv);
-const decryptStream = createDecryptStream(key, iv);
+const decryptStream = createDecryptionStream(key, iv);
 
 try {
   await new ReadableStream({
@@ -119,7 +119,7 @@ async function getAesKey(
 }
 
 // Usage example
-const decryptStream = createDecryptStream(
+const decryptStream = createDecryptionStream(
   await getAesKey(myCryptoKey, 'decrypt'),
   iv,
 );
@@ -129,7 +129,7 @@ const decryptStream = createDecryptStream(
 
 Some AES-GCM implementations like WebCrypto's [`encrypt()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt) **append authentication tags to the end of the ciphertext**, while others, like Node.js's [`createCipheriv()`](https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options), **do not append the authentication tag to the ciphertext, instead returning the authentication tag separately**.
 
-This library supports both modes. By default, it appends the authentication tag to the ciphertext during encryption, and expects the authentication tag to be appended to the ciphertext during decryption. If you want to use the library in the latter mode, you can pass `detachAuthTag: true` to `createEncryptionStream()`, and `authTag` (a `Uint8Array` of the authentication tag) to `createDecryptStream()`. The `authTag` must be 16 bytes long.
+This library supports both modes. By default, it appends the authentication tag to the ciphertext during encryption, and expects the authentication tag to be appended to the ciphertext during decryption. If you want to use the library in the latter mode, you can pass `detachAuthTag: true` to `createEncryptionStream()`, and `authTag` (a `Uint8Array` of the authentication tag) to `createDecryptionStream()`. The `authTag` must be 16 bytes long.
 
 ### Requesting a detached authentication tag from the encryption stream
 
@@ -149,7 +149,7 @@ Since the authentication tag is not available until the encryption stream is com
 ### Decrypting with a detached authentication tag
 
 ```ts
-const decryptStream = createDecryptStream(key, iv, {
+const decryptStream = createDecryptionStream(key, iv, {
   authTag: myDetachedAuthTag, // Uint8Array
 });
 
@@ -161,7 +161,7 @@ await readableStream.pipeThrough(decryptStream).pipeTo(writableStream);
 In advanced use cases, you may want to defer setting the authentication tag until after the decryption stream has started. This is useful if you want to set the authentication tag after the decryption stream has started, but before the stream is complete. **The decryption stream will not finalize until the authentication tag is set.**
 
 ```ts
-const decryptStream = createDecryptStream(key, iv, {
+const decryptStream = createDecryptionStream(key, iv, {
   authTag: 'defer',
 });
 

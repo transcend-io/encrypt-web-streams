@@ -1,6 +1,6 @@
 import { assert } from '@esm-bundle/chai';
 import {
-  createDecryptStream,
+  createDecryptionStream,
   createEncryptionStream,
   init,
 } from '../src/index.js';
@@ -41,7 +41,7 @@ it('should create encrypt and decrypt streams', () => {
   const iv = new Uint8Array(12).fill(2);
 
   const encryptionStream = createEncryptionStream(key, iv);
-  const decryptStream = createDecryptStream(key, iv);
+  const decryptStream = createDecryptionStream(key, iv);
 
   assert.ok(encryptionStream, 'Encrypt stream should be created');
   assert.ok(decryptStream, 'Decrypt stream should be created');
@@ -57,9 +57,9 @@ it('should fail to create create encrypt and decrypt streams when key is not 32 
     'createEncryptionStream should fail when key is not 32 bytes',
   );
   assert.throws(
-    () => createDecryptStream(key, iv),
+    () => createDecryptionStream(key, iv),
     /Key must be 32 bytes/,
-    'createDecryptStream should fail when key is not 32 bytes',
+    'createDecryptionStream should fail when key is not 32 bytes',
   );
 });
 
@@ -86,7 +86,7 @@ it('should encrypt and decrypt 1 byte of data', async () => {
   const decryptedData = await bufferEntireStream(
     createReadableStream(unencryptedData)
       .pipeThrough(createEncryptionStream(key, iv))
-      .pipeThrough(createDecryptStream(key, iv)),
+      .pipeThrough(createDecryptionStream(key, iv)),
   );
 
   assert.strictEqual(
@@ -109,7 +109,7 @@ it('when encrypting and decrypting 0 bytes of data, the decrypted data should ha
   const decryptedData = await bufferEntireStream(
     createReadableStream(unencryptedData)
       .pipeThrough(createEncryptionStream(key, iv))
-      .pipeThrough(createDecryptStream(key, iv)),
+      .pipeThrough(createDecryptionStream(key, iv)),
   );
 
   assert.strictEqual(
@@ -132,7 +132,7 @@ it('should encrypt and decrypt several chunks of data of varying sizes', async (
   const decryptedData = await bufferEntireStream(
     createReadableStream(unencryptedData)
       .pipeThrough(createEncryptionStream(key, iv))
-      .pipeThrough(createDecryptStream(key, iv)),
+      .pipeThrough(createDecryptionStream(key, iv)),
   );
 
   assert.strictEqual(

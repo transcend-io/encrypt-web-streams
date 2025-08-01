@@ -155,7 +155,7 @@ export interface DecryptStream extends TransformStream<Uint8Array, Uint8Array> {
  * @returns {TransformStream} A `TransformStream` that decrypts the ciphertext
  *   and verifies the authentication tag.
  */
-export function createDecryptStream(
+export function createDecryptionStream(
   key: Uint8Array,
   iv: Uint8Array,
   {

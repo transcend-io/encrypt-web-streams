@@ -1,7 +1,7 @@
 import { assert } from '@esm-bundle/chai';
 import fixturesJson from './fixtures/files/fixtures.json' with { type: 'json' };
 import {
-  createDecryptStream,
+  createDecryptionStream,
   createEncryptionStream,
   init,
 } from '../src/index.js';
@@ -82,7 +82,7 @@ for (const fixture of fixtures) {
     // Decrypt fixture
     const decryptionInfo = getDecryptionInfo(fixture);
 
-    const decryptStream = createDecryptStream(
+    const decryptStream = createDecryptionStream(
       decryptionInfo.key,
       decryptionInfo.iv,
       { authTag: decryptionInfo.authTag },
@@ -162,7 +162,7 @@ it('should fail authentication for malformed auth tag', async () => {
     decryptionInfo.authTag.length,
   );
 
-  const decryptStream = createDecryptStream(
+  const decryptStream = createDecryptionStream(
     decryptionInfo.key,
     decryptionInfo.iv,
     { authTag: malformedAuthTag },

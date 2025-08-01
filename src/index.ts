@@ -4,4 +4,8 @@
  * This module provides WebAssembly-powered streaming AES-256-GCM encryption and
  * decryption with a web-native TransformStream API.
  */
-export { init, createEncryptionStream, createDecryptStream } from './stream.js';
+export {
+  init,
+  createEncryptionStream,
+  createDecryptionStream,
+} from './stream.js';

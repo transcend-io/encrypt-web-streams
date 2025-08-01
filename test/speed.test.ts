@@ -2,7 +2,7 @@ import { Bench } from 'tinybench';
 import {
   init,
   createEncryptionStream,
-  createDecryptStream,
+  createDecryptionStream,
 } from '../src/index.js';
 
 // Initialize the Wasm module
@@ -46,7 +46,7 @@ bench
     // Streams
     const readableStream = makeReadableStream();
     const encryptionStream = createEncryptionStream(key, iv);
-    const decryptStream = createDecryptStream(key, iv);
+    const decryptStream = createDecryptionStream(key, iv);
 
     await readableStream
       .pipeThrough(encryptionStream)
