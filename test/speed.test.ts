@@ -1,7 +1,7 @@
 import { Bench } from 'tinybench';
 import {
   init,
-  createEncryptStream,
+  createEncryptionStream,
   createDecryptStream,
 } from '../src/index.js';
 
@@ -45,7 +45,7 @@ bench
   .add('aes_gcm_stream_wasm', async () => {
     // Streams
     const readableStream = makeReadableStream();
-    const encryptStream = createEncryptStream(key, iv);
+    const encryptStream = createEncryptionStream(key, iv);
     const decryptStream = createDecryptStream(key, iv);
 
     await readableStream

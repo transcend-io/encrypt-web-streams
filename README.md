@@ -36,7 +36,7 @@ Provides TransformStreams for AES-256-GCM encryption and decryption.
 ```ts
 import {
   init,
-  createEncryptStream,
+  createEncryptionStream,
   createDecryptStream,
 } from '@bencmbrook/aes_gcm_stream';
 ```
@@ -44,7 +44,7 @@ import {
 ### JS API
 
 - `init(): Promise<InitOutput>` — asynchronously loads the Wasm module (Node.js build auto-initializes)
-- `createEncryptStream(key, iv, options?)` — returns a `TransformStream` that encrypts each chunk
+- `createEncryptionStream(key, iv, options?)` — returns a `TransformStream` that encrypts each chunk
 - `createDecryptStream(key, iv, options?)` — returns a `TransformStream` that decrypts and verifies each chunk
 
 ## Streaming Usage
@@ -52,7 +52,7 @@ import {
 ```js
 import {
   init,
-  createEncryptStream,
+  createEncryptionStream,
   createDecryptStream,
 } from '@bencmbrook/aes_gcm_stream';
 
@@ -61,7 +61,7 @@ await init();
 const key = crypto.getRandomValues(new Uint8Array(32));
 const iv = crypto.getRandomValues(new Uint8Array(12));
 
-const encryptStream = createEncryptStream(key, iv);
+const encryptStream = createEncryptionStream(key, iv);
 const decryptStream = createDecryptStream(key, iv);
 
 try {
@@ -129,12 +129,12 @@ const decryptStream = createDecryptStream(
 
 Some AES-GCM implementations like WebCrypto's [`encrypt()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt) **append authentication tags to the end of the ciphertext**, while others, like Node.js's [`createCipheriv()`](https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options), **do not append the authentication tag to the ciphertext, instead returning the authentication tag separately**.
 
-This library supports both modes. By default, it appends the authentication tag to the ciphertext during encryption, and expects the authentication tag to be appended to the ciphertext during decryption. If you want to use the library in the latter mode, you can pass `detachAuthTag: true` to `createEncryptStream()`, and `authTag` (a `Uint8Array` of the authentication tag) to `createDecryptStream()`. The `authTag` must be 16 bytes long.
+This library supports both modes. By default, it appends the authentication tag to the ciphertext during encryption, and expects the authentication tag to be appended to the ciphertext during decryption. If you want to use the library in the latter mode, you can pass `detachAuthTag: true` to `createEncryptionStream()`, and `authTag` (a `Uint8Array` of the authentication tag) to `createDecryptStream()`. The `authTag` must be 16 bytes long.
 
 ### Requesting a detached authentication tag from the encryption stream
 
 ```ts
-const encryptStream = createEncryptStream(key, iv, { detachAuthTag: true });
+const encryptStream = createEncryptionStream(key, iv, { detachAuthTag: true });
 
 await readableStream.pipeThrough(encryptStream).pipeTo(writableStream);
 
@@ -194,13 +194,13 @@ This library assumes you understand AES-GCM and its pitfalls, but it is worth re
 
 ### 1. Key + IV Uniqueness
 
-Never reuse (`key`, `iv`) pairs across multiple messages (i.e., calls to `createEncryptStream()`). Each new encryption must have a fresh, random IV. Reusing a key and IV pair even once can be catastrophic to both the plaintext and the encryption key's confidentiality.
+Never reuse (`key`, `iv`) pairs across multiple messages (i.e., calls to `createEncryptionStream()`). Each new encryption must have a fresh, random IV. Reusing a key and IV pair even once can be catastrophic to both the plaintext and the encryption key's confidentiality.
 
-You should couple your calls to `createEncryptStream()` to generate a random IV for each new message.
+You should couple your calls to `createEncryptionStream()` to generate a random IV for each new message.
 
 ```ts
 const iv = crypto.getRandomValues(new Uint8Array(12));
-const encryptStream = createEncryptStream(key, iv);
+const encryptStream = createEncryptionStream(key, iv);
 ```
 
 ### 2. Unverified Plaintext During Decryption

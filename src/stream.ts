@@ -52,7 +52,7 @@ export interface EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
  * @returns {EncryptStream} An `EncryptStream`, which is a `TransformStream`
  *   with an added `getAuthTag()` method
  */
-export function createEncryptStream(
+export function createEncryptionStream(
   key: Uint8Array,
   iv: Uint8Array,
   {

@@ -1,7 +1,7 @@
 import { assert } from '@esm-bundle/chai';
 import {
   createDecryptStream,
-  createEncryptStream,
+  createEncryptionStream,
   init,
 } from '../src/index.js';
 
@@ -40,7 +40,7 @@ it('should create encrypt and decrypt streams', () => {
   const key = new Uint8Array(32).fill(1);
   const iv = new Uint8Array(12).fill(2);
 
-  const encryptStream = createEncryptStream(key, iv);
+  const encryptStream = createEncryptionStream(key, iv);
   const decryptStream = createDecryptStream(key, iv);
 
   assert.ok(encryptStream, 'Encrypt stream should be created');
@@ -52,9 +52,9 @@ it('should fail to create create encrypt and decrypt streams when key is not 32 
   const iv = new Uint8Array(12).fill(2);
 
   assert.throws(
-    () => createEncryptStream(key, iv),
+    () => createEncryptionStream(key, iv),
     /Key must be 32 bytes/,
-    'createEncryptStream should fail when key is not 32 bytes',
+    'createEncryptionStream should fail when key is not 32 bytes',
   );
   assert.throws(
     () => createDecryptStream(key, iv),
@@ -74,7 +74,7 @@ it('should encrypt a single chunk of data', async () => {
       controller.close();
     },
   })
-    .pipeThrough(createEncryptStream(key, iv))
+    .pipeThrough(createEncryptionStream(key, iv))
     .pipeTo(new WritableStream());
 });
 
@@ -85,7 +85,7 @@ it('should encrypt and decrypt 1 byte of data', async () => {
 
   const decryptedData = await bufferEntireStream(
     createReadableStream(unencryptedData)
-      .pipeThrough(createEncryptStream(key, iv))
+      .pipeThrough(createEncryptionStream(key, iv))
       .pipeThrough(createDecryptStream(key, iv)),
   );
 
@@ -108,7 +108,7 @@ it('when encrypting and decrypting 0 bytes of data, the decrypted data should ha
 
   const decryptedData = await bufferEntireStream(
     createReadableStream(unencryptedData)
-      .pipeThrough(createEncryptStream(key, iv))
+      .pipeThrough(createEncryptionStream(key, iv))
       .pipeThrough(createDecryptStream(key, iv)),
   );
 
@@ -131,7 +131,7 @@ it('should encrypt and decrypt several chunks of data of varying sizes', async (
 
   const decryptedData = await bufferEntireStream(
     createReadableStream(unencryptedData)
-      .pipeThrough(createEncryptStream(key, iv))
+      .pipeThrough(createEncryptionStream(key, iv))
       .pipeThrough(createDecryptStream(key, iv)),
   );
 
@@ -150,7 +150,9 @@ it('should encrypt and decrypt several chunks of data of varying sizes', async (
 it('should throw an error if getAuthTag() is called before the encryption stream is complete', () => {
   const key = new Uint8Array(32).fill(1);
   const iv = new Uint8Array(12).fill(2);
-  const encryptStream = createEncryptStream(key, iv, { detachAuthTag: true });
+  const encryptStream = createEncryptionStream(key, iv, {
+    detachAuthTag: true,
+  });
 
   assert.throws(
     () => encryptStream.getAuthTag(),
@@ -161,7 +163,7 @@ it('should throw an error if getAuthTag() is called before the encryption stream
 it('should throw a TypeError if getAuthTag() is called without having specified detachAuthTag: true', () => {
   const key = new Uint8Array(32).fill(1);
   const iv = new Uint8Array(12).fill(2);
-  const encryptStream = createEncryptStream(key, iv);
+  const encryptStream = createEncryptionStream(key, iv);
 
   assert.throws(
     () => encryptStream.getAuthTag(),

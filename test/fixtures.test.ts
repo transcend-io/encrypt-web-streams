@@ -2,7 +2,7 @@ import { assert } from '@esm-bundle/chai';
 import fixturesJson from './fixtures/files/fixtures.json' with { type: 'json' };
 import {
   createDecryptStream,
-  createEncryptStream,
+  createEncryptionStream,
   init,
 } from '../src/index.js';
 import type { Fixture } from './fixtures/rebuild-fixtures.js';
@@ -226,7 +226,7 @@ for (const fixture of fixtures) {
     // Encrypt fixture
     const decryptionInfo = getDecryptionInfo(fixture);
 
-    const encryptStream = createEncryptStream(
+    const encryptStream = createEncryptionStream(
       decryptionInfo.key,
       decryptionInfo.iv,
       { detachAuthTag: true },
