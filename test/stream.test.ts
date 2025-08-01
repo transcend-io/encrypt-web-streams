@@ -41,10 +41,10 @@ it('should create encrypt and decrypt streams', () => {
   const iv = new Uint8Array(12).fill(2);
 
   const encryptionStream = createEncryptionStream(key, iv);
-  const decryptStream = createDecryptionStream(key, iv);
+  const decryptionStream = createDecryptionStream(key, iv);
 
   assert.ok(encryptionStream, 'Encrypt stream should be created');
-  assert.ok(decryptStream, 'Decrypt stream should be created');
+  assert.ok(decryptionStream, 'Decrypt stream should be created');
 });
 
 it('should fail to create create encrypt and decrypt streams when key is not 32 bytes', () => {

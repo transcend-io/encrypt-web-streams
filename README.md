@@ -62,7 +62,7 @@ const key = crypto.getRandomValues(new Uint8Array(32));
 const iv = crypto.getRandomValues(new Uint8Array(12));
 
 const encryptionStream = createEncryptionStream(key, iv);
-const decryptStream = createDecryptionStream(key, iv);
+const decryptionStream = createDecryptionStream(key, iv);
 
 try {
   await new ReadableStream({
@@ -73,7 +73,7 @@ try {
     },
   })
     .pipeThrough(encryptionStream)
-    .pipeThrough(decryptStream)
+    .pipeThrough(decryptionStream)
     .pipeTo(
       new WritableStream({
         write(chunk) {
@@ -119,7 +119,7 @@ async function getAesKey(
 }
 
 // Usage example
-const decryptStream = createDecryptionStream(
+const decryptionStream = createDecryptionStream(
   await getAesKey(myCryptoKey, 'decrypt'),
   iv,
 );
@@ -149,11 +149,11 @@ Since the authentication tag is not available until the encryption stream is com
 ### Decrypting with a detached authentication tag
 
 ```ts
-const decryptStream = createDecryptionStream(key, iv, {
+const decryptionStream = createDecryptionStream(key, iv, {
   authTag: myDetachedAuthTag, // Uint8Array
 });
 
-await readableStream.pipeThrough(decryptStream).pipeTo(writableStream);
+await readableStream.pipeThrough(decryptionStream).pipeTo(writableStream);
 ```
 
 ### Advanced: Defer setting the detached authentication tag while decrypting
@@ -161,17 +161,17 @@ await readableStream.pipeThrough(decryptStream).pipeTo(writableStream);
 In advanced use cases, you may want to defer setting the authentication tag until after the decryption stream has started. This is useful if you want to set the authentication tag after the decryption stream has started, but before the stream is complete. **The decryption stream will not finalize until the authentication tag is set.**
 
 ```ts
-const decryptStream = createDecryptionStream(key, iv, {
+const decryptionStream = createDecryptionStream(key, iv, {
   authTag: 'defer',
 });
 
 // Start the decryption stream, but do not await the promise, since it cannot resolve until the authentication tag is set.
 const decryptionPromise = readableStream
-  .pipeThrough(decryptStream)
+  .pipeThrough(decryptionStream)
   .pipeTo(writableStream);
 
 // Set the authentication tag after the decryption stream has started
-decryptStream.setAuthTag(myDetachedAuthTag);
+decryptionStream.setAuthTag(myDetachedAuthTag);
 
 // Await the decryption stream
 await decryptionPromise;

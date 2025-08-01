@@ -46,11 +46,11 @@ bench
     // Streams
     const readableStream = makeReadableStream();
     const encryptionStream = createEncryptionStream(key, iv);
-    const decryptStream = createDecryptionStream(key, iv);
+    const decryptionStream = createDecryptionStream(key, iv);
 
     await readableStream
       .pipeThrough(encryptionStream)
-      .pipeThrough(decryptStream)
+      .pipeThrough(decryptionStream)
       .pipeTo(new WritableStream());
   })
   .add(

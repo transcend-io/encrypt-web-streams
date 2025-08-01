@@ -82,7 +82,7 @@ for (const fixture of fixtures) {
     // Decrypt fixture
     const decryptionInfo = getDecryptionInfo(fixture);
 
-    const decryptStream = createDecryptionStream(
+    const decryptionStream = createDecryptionStream(
       decryptionInfo.key,
       decryptionInfo.iv,
       { authTag: decryptionInfo.authTag },
@@ -95,7 +95,7 @@ for (const fixture of fixtures) {
 
     // Stream decrypt the file and compute a checksum (in addition to built-in verification of the authentication tag)
     let decryptedChecksum: string | undefined;
-    await sourceStream.pipeThrough(decryptStream).pipeTo(
+    await sourceStream.pipeThrough(decryptionStream).pipeTo(
       new WritableStream({
         write(chunk) {
           sha256.update(chunk);
@@ -162,7 +162,7 @@ it('should fail authentication for malformed auth tag', async () => {
     decryptionInfo.authTag.length,
   );
 
-  const decryptStream = createDecryptionStream(
+  const decryptionStream = createDecryptionStream(
     decryptionInfo.key,
     decryptionInfo.iv,
     { authTag: malformedAuthTag },
@@ -170,7 +170,7 @@ it('should fail authentication for malformed auth tag', async () => {
 
   let expectedError: Error | undefined;
   try {
-    await sourceStream.pipeThrough(decryptStream).pipeTo(
+    await sourceStream.pipeThrough(decryptionStream).pipeTo(
       new WritableStream({
         write() {
           // Do nothing

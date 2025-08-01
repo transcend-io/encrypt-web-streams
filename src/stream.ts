@@ -135,7 +135,8 @@ export function createEncryptionStream(
 }
 
 /** A `TransformStream` with an additional method to set the authentication tag. */
-export interface DecryptStream extends TransformStream<Uint8Array, Uint8Array> {
+export interface DecryptionStream
+  extends TransformStream<Uint8Array, Uint8Array> {
   /** Set the authentication tag. */
   setAuthTag(authTag: Uint8Array): void;
 }
@@ -176,7 +177,7 @@ export function createDecryptionStream(
      */
     authTag?: Uint8Array | 'defer';
   } = {},
-): DecryptStream {
+): DecryptionStream {
   try {
     const dec = new Decryptor(key, iv);
     if (additionalData) dec.init_adata(additionalData);
@@ -233,8 +234,8 @@ export function createDecryptionStream(
       },
     });
 
-    const decryptStream = stream as DecryptStream;
-    decryptStream.setAuthTag = (authTag: Uint8Array) => {
+    const decryptionStream = stream as DecryptionStream;
+    decryptionStream.setAuthTag = (authTag: Uint8Array) => {
       if (authTag.length !== 16) {
         throw new TypeError('The `authTag` must be 16 bytes long.');
       }
@@ -242,7 +243,7 @@ export function createDecryptionStream(
       detachedAuthTagPromise = Promise.resolve(authTag);
     };
 
-    return decryptStream;
+    return decryptionStream;
   } catch (error) {
     if (error instanceof Error) {
       throw new TypeError(`Failed to create decrypt stream:`, { cause: error });
