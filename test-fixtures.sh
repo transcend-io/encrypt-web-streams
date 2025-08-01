@@ -11,7 +11,14 @@ stop_server
 pnpm exec http-server test/fixtures -p 8142 --cors &
 
 # # Run the tests, and pass additional arguments to the web-test-runner
-pnpm exec web-test-runner --files test/fixtures.test.ts --node-resolve --playwright --browsers chromium firefox webkit "$@"
+pnpm exec web-test-runner \
+  --files test/fixtures.test.ts \
+  --node-resolve \
+  --playwright \
+  --browsers chromium \
+  --browsers webkit \
+  --browsers firefox \
+  "$@"
 
 # On kill, run the cleanup function
 cleanup() {

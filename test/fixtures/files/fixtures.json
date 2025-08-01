@@ -1,7 +1,8 @@
 [
   {
-    "url": "/files/encrypted/file_example_JSON_1kb.json.enc",
     "filePrefix": "file_example_JSON_1kb",
+    "encryptedPathname": "/files/encrypted/file_example_JSON_1kb.json.enc",
+    "unencryptedPathname": "/files/unencrypted/file_example_JSON_1kb.json",
     "mimetype": "application/json",
     "encryptedSize": 20471,
     "unencryptedSize": 20471,
@@ -14,8 +15,9 @@
     "encryptedChecksum": "96323ebe63fa6860bcc5e637d42182e07bdc64d7b44c0cbc8a4c59efb3835a1a"
   },
   {
-    "url": "/files/encrypted/file_example_XML_24kb.xml.enc",
     "filePrefix": "file_example_XML_24kb",
+    "encryptedPathname": "/files/encrypted/file_example_XML_24kb.xml.enc",
+    "unencryptedPathname": "/files/unencrypted/file_example_XML_24kb.xml",
     "mimetype": "application/xml",
     "encryptedSize": 23972,
     "unencryptedSize": 23972,
@@ -28,8 +30,9 @@
     "encryptedChecksum": "3ad0b16904900089a8f999b83346a055196a0926c38e5025a6262bc960efdc83"
   },
   {
-    "url": "/files/encrypted/htmlfile.html.enc",
     "filePrefix": "htmlfile",
+    "encryptedPathname": "/files/encrypted/htmlfile.html.enc",
+    "unencryptedPathname": "/files/unencrypted/htmlfile.html",
     "mimetype": "text/html",
     "encryptedSize": 186940,
     "unencryptedSize": 186940,
@@ -42,8 +45,9 @@
     "encryptedChecksum": "2f3dc0eac2bd7c27970603ce125bf445db71866bfa49cd29fad200c0ec5862e6"
   },
   {
-    "url": "/files/encrypted/file_example_CSV_5000.csv.enc",
     "filePrefix": "file_example_CSV_5000",
+    "encryptedPathname": "/files/encrypted/file_example_CSV_5000.csv.enc",
+    "unencryptedPathname": "/files/unencrypted/file_example_CSV_5000.csv",
     "mimetype": "text/csv",
     "encryptedSize": 284042,
     "unencryptedSize": 284042,
@@ -56,8 +60,9 @@
     "encryptedChecksum": "5a0d20e6bcdf5a8304d27f5cc800de5e39de8c24538a35f20c98dd25e08e803a"
   },
   {
-    "url": "/files/encrypted/file_example_JPG_500kB.jpg.enc",
     "filePrefix": "file_example_JPG_500kB",
+    "encryptedPathname": "/files/encrypted/file_example_JPG_500kB.jpg.enc",
+    "unencryptedPathname": "/files/unencrypted/file_example_JPG_500kB.jpg",
     "mimetype": "image/jpeg",
     "encryptedSize": 555181,
     "unencryptedSize": 555181,
@@ -70,8 +75,9 @@
     "encryptedChecksum": "9ce45563d8655d5d11da4993532524735c6671327d2826488bc779d5fc60e2c2"
   },
   {
-    "url": "/files/encrypted/file_example_MOV_480_700kB.mov.enc",
     "filePrefix": "file_example_MOV_480_700kB",
+    "encryptedPathname": "/files/encrypted/file_example_MOV_480_700kB.mov.enc",
+    "unencryptedPathname": "/files/unencrypted/file_example_MOV_480_700kB.mov",
     "mimetype": "video/quicktime",
     "encryptedSize": 709764,
     "unencryptedSize": 709764,
@@ -84,8 +90,9 @@
     "encryptedChecksum": "833219adad9390e1ae2830b6a7bd60713f3cd382165494bc6e5a818df9ef0bde"
   },
   {
-    "url": "/files/encrypted/file_example_MP3_700KB.mp3.enc",
     "filePrefix": "file_example_MP3_700KB",
+    "encryptedPathname": "/files/encrypted/file_example_MP3_700KB.mp3.enc",
+    "unencryptedPathname": "/files/unencrypted/file_example_MP3_700KB.mp3",
     "mimetype": "audio/mpeg",
     "encryptedSize": 733645,
     "unencryptedSize": 733645,
@@ -98,8 +105,9 @@
     "encryptedChecksum": "34bc908821bc10957b4850e19b4bfc99b91135248620641a85fa02a0f92ca48a"
   },
   {
-    "url": "/files/encrypted/zip_2MB.zip.enc",
     "filePrefix": "zip_2MB",
+    "encryptedPathname": "/files/encrypted/zip_2MB.zip.enc",
+    "unencryptedPathname": "/files/unencrypted/zip_2MB.zip",
     "mimetype": "application/zip",
     "encryptedSize": 2036861,
     "unencryptedSize": 2036861,
@@ -112,8 +120,9 @@
     "encryptedChecksum": "743ffd11c157f8759e21a029cdb5e81d5232c5258da6e6c3249b8bc082e29570"
   },
   {
-    "url": "/files/encrypted/zip_5MB.zip.enc",
     "filePrefix": "zip_5MB",
+    "encryptedPathname": "/files/encrypted/zip_5MB.zip.enc",
+    "unencryptedPathname": "/files/unencrypted/zip_5MB.zip",
     "mimetype": "application/zip",
     "encryptedSize": 5452018,
     "unencryptedSize": 5452018,
@@ -126,8 +135,9 @@
     "encryptedChecksum": "0006db89c3db558c0b509fbbb80763c8304f982a8e7ca12c72bbcb2a766064cb"
   },
   {
-    "url": "/files/encrypted/zip_9MB.zip.enc",
     "filePrefix": "zip_9MB",
+    "encryptedPathname": "/files/encrypted/zip_9MB.zip.enc",
+    "unencryptedPathname": "/files/unencrypted/zip_9MB.zip",
     "mimetype": "application/zip",
     "encryptedSize": 9663802,
     "unencryptedSize": 9663802,
@@ -140,8 +150,9 @@
     "encryptedChecksum": "1c002ba91731af3c1a5bb7c54c03a18d125f1a13e38a5cc16455dbb2560ca308"
   },
   {
-    "url": "/files/encrypted/zip_10MB.zip.enc",
     "filePrefix": "zip_10MB",
+    "encryptedPathname": "/files/encrypted/zip_10MB.zip.enc",
+    "unencryptedPathname": "/files/unencrypted/zip_10MB.zip",
     "mimetype": "application/zip",
     "encryptedSize": 10679630,
     "unencryptedSize": 10679630,
@@ -154,8 +165,9 @@
     "encryptedChecksum": "52fb200e6333f254d799467afff546db4821f7b085ae8e60aa4dd8df459914e2"
   },
   {
-    "url": "/files/encrypted/big800MB.dat.enc",
     "filePrefix": "big800MB",
+    "encryptedPathname": "/files/encrypted/big800MB.dat.enc",
+    "unencryptedPathname": "/files/unencrypted/big800MB.dat",
     "encryptedSize": 838860800,
     "unencryptedSize": 838860800,
     "decryptionOptions": {

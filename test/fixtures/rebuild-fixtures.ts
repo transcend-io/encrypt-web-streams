@@ -15,7 +15,8 @@ const thisDirname = path.dirname(new URL(import.meta.url).pathname);
  * A fixture is a remote resource with a checksum of the unencrypted file
  */
 export interface Fixture {
-  url: string;
+  encryptedPathname: string;
+  unencryptedPathname: string;
   filePrefix: string;
   mimetype: string | undefined;
   encryptedSize: number;
@@ -160,8 +161,9 @@ async function main(): Promise<void> {
     });
 
     fixtures.push({
-      url: encryptedFilePathname,
       filePrefix,
+      encryptedPathname: encryptedFilePathname,
+      unencryptedPathname: unencryptedFilePathname,
       mimetype: mime.getType(file) ?? undefined,
       encryptedSize: encryptedFileSize,
       unencryptedSize: unencryptedFileSize,

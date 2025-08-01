@@ -1,6 +1,10 @@
 import { assert } from '@esm-bundle/chai';
 import fixturesJson from './fixtures/files/fixtures.json' with { type: 'json' };
-import { createDecryptStream, init } from '../src/index.js';
+import {
+  createDecryptStream,
+  createEncryptStream,
+  init,
+} from '../src/index.js';
 import type { Fixture } from './fixtures/rebuild-fixtures.js';
 import { createSHA256 } from 'hash-wasm';
 import prettyMilliseconds from 'pretty-ms';
@@ -59,13 +63,16 @@ function getDecryptionInfo(fixture: Fixture) {
 // Decrypt every fixture
 for (const fixture of fixtures) {
   await it(`should decrypt ${fixture.filePrefix}, pass authentication tag verification, and match unencrypted file checksum`, async () => {
-    const url = new URL(fixture.url, FIXTURES_SERVER_URL).toString();
+    const url = new URL(
+      fixture.encryptedPathname,
+      FIXTURES_SERVER_URL,
+    ).toString();
 
     // Get encrypted fixture
     const response = await fetch(url);
     const sourceStream = response.body;
     if (!sourceStream) {
-      throw new Error(`Failed to fetch fixture ${fixture.url}`);
+      throw new Error(`Failed to fetch fixture ${fixture.encryptedPathname}`);
     }
 
     // Decrypt fixture
@@ -131,13 +138,16 @@ await it('should fail authentication for malformed auth tag', async () => {
   if (!fixture) {
     throw new TypeError('No fixture found');
   }
-  const url = new URL(fixture.url, FIXTURES_SERVER_URL).toString();
+  const url = new URL(
+    fixture.encryptedPathname,
+    FIXTURES_SERVER_URL,
+  ).toString();
 
   // Get encrypted fixture
   const response = await fetch(url);
   const sourceStream = response.body;
   if (!sourceStream) {
-    throw new Error(`Failed to fetch fixture ${fixture.url}`);
+    throw new Error(`Failed to fetch fixture ${fixture.encryptedPathname}`);
   }
 
   // Decrypt fixture
@@ -192,3 +202,77 @@ await it('should fail authentication for malformed auth tag', async () => {
     'The decryption stream threw an error, but the error message was unexpected for a malformed authentication tag error',
   );
 });
+
+// Encrypt every fixture
+for (const fixture of fixtures) {
+  await it(`should encrypt ${fixture.filePrefix}, get a matching authentication tag, and match encrypted file checksum`, async () => {
+    const url = new URL(
+      fixture.unencryptedPathname,
+      FIXTURES_SERVER_URL,
+    ).toString();
+
+    // Get encrypted fixture
+    const response = await fetch(url);
+    const sourceStream = response.body;
+    if (!sourceStream) {
+      throw new Error(`Failed to fetch fixture ${fixture.unencryptedPathname}`);
+    }
+
+    // Encrypt fixture
+    const decryptionInfo = getDecryptionInfo(fixture);
+
+    const encryptStream = createEncryptStream(
+      decryptionInfo.key,
+      decryptionInfo.nonce,
+    );
+
+    const sha256 = await createSHA256();
+    sha256.init();
+
+    const startTime = performance.now();
+
+    // Stream encrypt the file and compute a checksum (in addition to built-in verification of the authentication tag)
+    let encryptedChecksum: string | undefined;
+    await sourceStream.pipeThrough(encryptStream).pipeTo(
+      new WritableStream({
+        write(chunk) {
+          sha256.update(chunk);
+        },
+        close() {
+          encryptedChecksum = sha256.digest('hex');
+        },
+        abort(reason) {
+          const error =
+            reason instanceof Error
+              ? reason
+              : // eslint-disable-next-line unicorn/no-nested-ternary
+                typeof reason === 'string'
+                ? new Error(reason)
+                : new Error('Unknown error');
+          error.message = `Stream was aborted: ${error.message}`;
+          error.name = 'StreamAbortedError';
+          throw error;
+        },
+      }),
+    );
+
+    // TODO: Get the authentication tag from the encrypt stream
+
+    assert.equal(
+      encryptedChecksum,
+      fixture.encryptedChecksum,
+      'The encryption stream was successful and passed authentication tag verification, yet our own checksums did not match',
+    );
+
+    const endTime = performance.now();
+    const timingMs = endTime - startTime;
+    const timingPretty = prettyMilliseconds(timingMs);
+    const sizePretty = prettyBytes(fixture.unencryptedSize);
+    const bitratePretty = prettyBytes(
+      fixture.unencryptedSize / (timingMs / 1000),
+    );
+    console.log(
+      `Successfully encrypted ${fixture.filePrefix} in ${timingPretty} (${bitratePretty}/s) - ${sizePretty} total.`,
+    );
+  });
+}
