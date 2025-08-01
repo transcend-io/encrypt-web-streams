@@ -16,10 +16,10 @@ void it('should initialize WASM module', async () => {
 
 void it('should create encrypt and decrypt streams', () => {
   const key = new Uint8Array(32).fill(1);
-  const nonce = new Uint8Array(12).fill(2);
+  const iv = new Uint8Array(12).fill(2);
 
-  const encryptStream = createEncryptStream(key, nonce, false);
-  const decryptStream = createDecryptStream(key, nonce);
+  const encryptStream = createEncryptStream(key, iv, false);
+  const decryptStream = createDecryptStream(key, iv);
 
   assert.ok(encryptStream, 'Encrypt stream should be created');
   assert.ok(decryptStream, 'Decrypt stream should be created');
@@ -27,10 +27,10 @@ void it('should create encrypt and decrypt streams', () => {
 
 void it('should encrypt data directly with Encryptor', () => {
   const key = new Uint8Array(32).fill(1);
-  const nonce = new Uint8Array(12).fill(2);
+  const iv = new Uint8Array(12).fill(2);
   const plaintext = new TextEncoder().encode('Hello, World!');
 
-  const encryptor = new Encryptor(key, nonce);
+  const encryptor = new Encryptor(key, iv);
   encryptor.update(plaintext);
   const final = encryptor.finalize();
 
@@ -45,16 +45,16 @@ void it('should encrypt data directly with Encryptor', () => {
 
 void it('should decrypt data directly with Decryptor', () => {
   const key = new Uint8Array(32).fill(1);
-  const nonce = new Uint8Array(12).fill(2);
+  const iv = new Uint8Array(12).fill(2);
   const plaintext = new TextEncoder().encode('Hello, World!');
 
   // First encrypt
-  const encryptor = new Encryptor(key, nonce);
+  const encryptor = new Encryptor(key, iv);
   encryptor.update(plaintext);
   const encrypted = encryptor.finalize();
 
   // Then decrypt
-  const decryptor = new Decryptor(key, nonce);
+  const decryptor = new Decryptor(key, iv);
   const decrypted = decryptor.update(encrypted);
   const final = decryptor.finalize();
 
@@ -77,12 +77,12 @@ void it('should decrypt data directly with Decryptor', () => {
 
 void it('should handle multiple chunks correctly', () => {
   const key = new Uint8Array(32).fill(1);
-  const nonce = new Uint8Array(12).fill(2);
+  const iv = new Uint8Array(12).fill(2);
   const chunk1 = new TextEncoder().encode('Hello, ');
   const chunk2 = new TextEncoder().encode('World!');
 
   // Encrypt multiple chunks
-  const encryptor = new Encryptor(key, nonce);
+  const encryptor = new Encryptor(key, iv);
   const encrypted1 = encryptor.update(chunk1);
   const encrypted2 = encryptor.update(chunk2);
   const final = encryptor.finalize();
@@ -98,7 +98,7 @@ void it('should handle multiple chunks correctly', () => {
   encrypted.set(final, offset);
 
   // Decrypt
-  const decryptor = new Decryptor(key, nonce);
+  const decryptor = new Decryptor(key, iv);
   const decrypted1 = decryptor.update(encrypted);
   const decrypted2 = decryptor.finalize();
 

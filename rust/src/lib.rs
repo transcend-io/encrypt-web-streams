@@ -12,16 +12,16 @@ pub struct Encryptor {
 
 #[wasm_bindgen]
 impl Encryptor {
-    /// Create with a 32-byte key and nonce (recommend 12 bytes).
+    /// Create with a 32-byte key and iv (recommend 12 bytes).
     #[wasm_bindgen(constructor)]
-    pub fn new(key: &[u8], nonce: &[u8]) -> Result<Encryptor, JsValue> {
+    pub fn new(key: &[u8], iv: &[u8]) -> Result<Encryptor, JsValue> {
         if key.len() != 32 {
             return Err(JsValue::from_str("Key must be 32 bytes"));
         }
         let mut key_arr = [0u8; 32];
         key_arr.copy_from_slice(key);
         Ok(Encryptor {
-            inner: Aes256GcmStreamEncryptor::new(key_arr, nonce),
+            inner: Aes256GcmStreamEncryptor::new(key_arr, iv),
         })
     }
 
@@ -57,14 +57,14 @@ pub struct Decryptor {
 #[wasm_bindgen]
 impl Decryptor {
     #[wasm_bindgen(constructor)]
-    pub fn new(key: &[u8], nonce: &[u8]) -> Result<Decryptor, JsValue> {
+    pub fn new(key: &[u8], iv: &[u8]) -> Result<Decryptor, JsValue> {
         if key.len() != 32 {
             return Err(JsValue::from_str("Key must be 32 bytes"));
         }
         let mut key_arr = [0u8; 32];
         key_arr.copy_from_slice(key);
         Ok(Decryptor {
-            inner: Aes256GcmStreamDecryptor::new(key_arr, nonce),
+            inner: Aes256GcmStreamDecryptor::new(key_arr, iv),
         })
     }
 
@@ -95,13 +95,13 @@ mod tests {
             189, 20, 114, 186, 98, 74, 168, 105, 123, 222, 98, 100, 187, 9, 191, 204, 240, 80, 147,
             76, 28, 183, 215, 144, 231, 3, 196, 242, 86, 134, 113, 99,
         ];
-        let nonce = [234, 83, 84, 251, 107, 241, 39, 14, 146, 22, 11, 30];
+        let iv = [234, 83, 84, 251, 107, 241, 39, 14, 146, 22, 11, 30];
 
         // Create a large test file (simulate the big.zip issue)
         let large_data = vec![0u8; 100 * 1024 * 1024]; // 100MB of zeros
 
         // Encrypt the large data
-        let mut encryptor = Aes256GcmStreamEncryptor::new(key, &nonce);
+        let mut encryptor = Aes256GcmStreamEncryptor::new(key, &iv);
         let mut encrypted_data = Vec::new();
 
         // Process in chunks
@@ -116,7 +116,7 @@ mod tests {
         println!("Encrypted {} bytes", encrypted_data.len());
 
         // Now try to decrypt
-        let mut decryptor = Aes256GcmStreamDecryptor::new(key, &nonce);
+        let mut decryptor = Aes256GcmStreamDecryptor::new(key, &iv);
         let mut decrypted_data = Vec::new();
 
         // Process all encrypted data (including the tag) through update
@@ -146,7 +146,7 @@ mod tests {
             189, 20, 114, 186, 98, 74, 168, 105, 123, 222, 98, 100, 187, 9, 191, 204, 240, 80, 147,
             76, 28, 183, 215, 144, 231, 3, 196, 242, 86, 134, 113, 99,
         ];
-        let nonce = [234, 83, 84, 251, 107, 241, 39, 14, 146, 22, 11, 30];
+        let iv = [234, 83, 84, 251, 107, 241, 39, 14, 146, 22, 11, 30];
 
         // Create data that would cause many block operations
         // Each block is 16 bytes, so we need a lot of blocks to test counter overflow
@@ -159,7 +159,7 @@ mod tests {
         let test_blocks = 1 << 24; // 2^24 blocks = 256MB
         let test_data = vec![0u8; test_blocks * 16];
 
-        let mut encryptor = Aes256GcmStreamEncryptor::new(key, &nonce);
+        let mut encryptor = Aes256GcmStreamEncryptor::new(key, &iv);
         let mut encrypted_data = Vec::new();
 
         // Process in smaller chunks to avoid memory issues
@@ -178,7 +178,7 @@ mod tests {
         );
 
         // Now decrypt
-        let mut decryptor = Aes256GcmStreamDecryptor::new(key, &nonce);
+        let mut decryptor = Aes256GcmStreamDecryptor::new(key, &iv);
         let mut decrypted_data = Vec::new();
 
         // Process all encrypted data (including the tag) through update

@@ -59,12 +59,12 @@ export class Decryptor {
     }
     /**
      * @param {Uint8Array} key
-     * @param {Uint8Array} nonce
+     * @param {Uint8Array} iv
      */
-    constructor(key, nonce) {
+    constructor(key, iv) {
         const ptr0 = passArray8ToWasm0(key, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passArray8ToWasm0(nonce, wasm.__wbindgen_malloc);
+        const ptr1 = passArray8ToWasm0(iv, wasm.__wbindgen_malloc);
         const len1 = WASM_VECTOR_LEN;
         const ret = wasm.decryptor_new(ptr0, len0, ptr1, len1);
         if (ret[2]) {
@@ -129,14 +129,14 @@ export class Encryptor {
         wasm.__wbg_encryptor_free(ptr, 0);
     }
     /**
-     * Create with a 32-byte key and nonce (recommend 12 bytes).
+     * Create with a 32-byte key and iv (recommend 12 bytes).
      * @param {Uint8Array} key
-     * @param {Uint8Array} nonce
+     * @param {Uint8Array} iv
      */
-    constructor(key, nonce) {
+    constructor(key, iv) {
         const ptr0 = passArray8ToWasm0(key, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passArray8ToWasm0(nonce, wasm.__wbindgen_malloc);
+        const ptr1 = passArray8ToWasm0(iv, wasm.__wbindgen_malloc);
         const len1 = WASM_VECTOR_LEN;
         const ret = wasm.encryptor_new(ptr0, len0, ptr1, len1);
         if (ret[2]) {

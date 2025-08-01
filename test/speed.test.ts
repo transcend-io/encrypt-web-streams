@@ -8,9 +8,9 @@ import {
 // Initialize the WASM module
 await init();
 
-// Create a key and nonce
+// Create a key and iv
 const key = new Uint8Array(32);
-const nonce = new Uint8Array(12);
+const iv = new Uint8Array(12);
 
 // Crypto key
 const cryptoKey = await crypto.subtle.importKey(
@@ -45,8 +45,8 @@ bench
   .add('aes_gcm_stream_wasm', async () => {
     // Streams
     const readableStream = makeReadableStream();
-    const encryptStream = createEncryptStream(key, nonce);
-    const decryptStream = createDecryptStream(key, nonce);
+    const encryptStream = createEncryptStream(key, iv, false);
+    const decryptStream = createDecryptStream(key, iv);
 
     await readableStream
       .pipeThrough(encryptStream)
@@ -66,12 +66,12 @@ bench
           break;
         }
         const encrypted = await crypto.subtle.encrypt(
-          { name: 'AES-GCM', iv: nonce },
+          { name: 'AES-GCM', iv },
           cryptoKey,
           value,
         );
         await crypto.subtle.decrypt(
-          { name: 'AES-GCM', iv: nonce },
+          { name: 'AES-GCM', iv },
           cryptoKey,
           encrypted,
         );

@@ -55,7 +55,7 @@ function base64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
 function getDecryptionInfo(fixture: Fixture) {
   return {
     key: base64ToUint8Array(fixture.decryptionOptions.key),
-    nonce: base64ToUint8Array(fixture.decryptionOptions.iv),
+    iv: base64ToUint8Array(fixture.decryptionOptions.iv),
     authTag: base64ToUint8Array(fixture.decryptionOptions.authTag),
   };
 }
@@ -80,7 +80,7 @@ for (const fixture of fixtures) {
 
     const decryptStream = createDecryptStream(
       decryptionInfo.key,
-      decryptionInfo.nonce,
+      decryptionInfo.iv,
       decryptionInfo.authTag,
     );
 
@@ -159,7 +159,7 @@ await it('should fail authentication for malformed auth tag', async () => {
 
   const decryptStream = createDecryptStream(
     decryptionInfo.key,
-    decryptionInfo.nonce,
+    decryptionInfo.iv,
     malformedAuthTag,
   );
 
@@ -223,7 +223,7 @@ for (const fixture of fixtures) {
 
     const encryptStream = createEncryptStream(
       decryptionInfo.key,
-      decryptionInfo.nonce,
+      decryptionInfo.iv,
       true,
     );
 

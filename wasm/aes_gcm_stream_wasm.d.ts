@@ -5,7 +5,7 @@
  */
 export class Decryptor {
   free(): void;
-  constructor(key: Uint8Array, nonce: Uint8Array);
+  constructor(key: Uint8Array, iv: Uint8Array);
   init_adata(adata: Uint8Array): void;
   update(chunk: Uint8Array): Uint8Array;
   /**
@@ -19,9 +19,9 @@ export class Decryptor {
 export class Encryptor {
   free(): void;
   /**
-   * Create with a 32-byte key and nonce (recommend 12 bytes).
+   * Create with a 32-byte key and iv (recommend 12 bytes).
    */
-  constructor(key: Uint8Array, nonce: Uint8Array);
+  constructor(key: Uint8Array, iv: Uint8Array);
   /**
    * (Optional) set Additional Authenticated Data.
    */

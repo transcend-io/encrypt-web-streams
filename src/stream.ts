@@ -36,7 +36,7 @@ export interface EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
  * Create a native TransformStream that encrypts via the WASM Encryptor.
  *
  * @param key - 32-byte encryption key
- * @param nonce - 12-byte nonce (recommended)
+ * @param iv - 12-byte iv (recommended)
  * @param detachAuthTag - If true, the authentication tag will not be appended to the ciphertext
  *                        and must be retrieved with `getAuthTag()` after the stream is complete.
  * @param adata - Optional additional authenticated data
@@ -45,11 +45,11 @@ export interface EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
  */
 export function createEncryptStream(
   key: Uint8Array,
-  nonce: Uint8Array,
+  iv: Uint8Array,
   detachAuthTag: boolean,
   adata?: Uint8Array,
 ): EncryptStream {
-  const enc = new Encryptor(key, nonce);
+  const enc = new Encryptor(key, iv);
   if (adata) enc.init_adata(adata);
 
   let hasData = false;
@@ -105,7 +105,7 @@ export function createEncryptStream(
  * Create a native TransformStream that decrypts via the WASM Decryptor.
  *
  * @param key - 32-byte encryption key
- * @param nonce - 12-byte nonce (recommended)
+ * @param iv - 12-byte iv (recommended)
  * @param detachedAuthTag - Optional detached authentication tag to append to ciphertext (for Node.js `createCipheriv` compatibility)
  * @param adata - Optional additional authenticated data
  *
@@ -113,11 +113,11 @@ export function createEncryptStream(
  */
 export function createDecryptStream(
   key: Uint8Array,
-  nonce: Uint8Array,
+  iv: Uint8Array,
   detachedAuthTag?: Uint8Array,
   adata?: Uint8Array,
 ): TransformStream<Uint8Array, Uint8Array> {
-  const dec = new Decryptor(key, nonce);
+  const dec = new Decryptor(key, iv);
   if (adata) dec.init_adata(adata);
 
   let hasData = false;
