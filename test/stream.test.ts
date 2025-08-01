@@ -170,3 +170,61 @@ it('should throw a TypeError if getAuthTag() is called without having specified 
     /The authentication tag is not available when `detachAuthTag` is false./,
   );
 });
+
+it('should successfully handle a detached auth tag', async () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
+  const unencryptedData = new Uint8Array(1024).fill(1);
+
+  // Encrypt
+  const encryptionStream = createEncryptionStream(key, iv, {
+    detachAuthTag: true,
+  });
+  const readableStream = createReadableStream(unencryptedData);
+  const encryptedData = await bufferEntireStream(
+    readableStream.pipeThrough(encryptionStream),
+  );
+
+  // Get the auth tag after encryption is complete
+  const authTag = encryptionStream.getAuthTag();
+  assert.strictEqual(authTag.length, 16, 'Auth tag should be 16 bytes');
+
+  // Decrypt 1: Provide the auth tag directly
+  const decryptedData1 = await bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(
+      createDecryptionStream(key, iv, {
+        authTag,
+      }),
+    ),
+  );
+  assert.strictEqual(
+    decryptedData1.length,
+    unencryptedData.length,
+    'Decrypted data (1) should have same length as unencrypted data',
+  );
+  assert.deepStrictEqual(
+    decryptedData1,
+    unencryptedData,
+    'Decrypted data (1) should match unencrypted data',
+  );
+
+  // Decrypt 2: Defer the auth tag
+  const decryptionStream2 = createDecryptionStream(key, iv, {
+    authTag: 'defer',
+  });
+  const decryptedDataPromise = bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(decryptionStream2),
+  );
+  decryptionStream2.setAuthTag(authTag);
+  const decryptedData2 = await decryptedDataPromise;
+  assert.strictEqual(
+    decryptedData2.length,
+    unencryptedData.length,
+    'Decrypted data should have same length as unencrypted data',
+  );
+  assert.deepStrictEqual(
+    decryptedData2,
+    unencryptedData,
+    'Decrypted data should match unencrypted data',
+  );
+});
