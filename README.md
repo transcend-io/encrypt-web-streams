@@ -44,8 +44,8 @@ import {
 ### JS API
 
 - `init(): Promise<InitOutput>` — asynchronously loads the Wasm module (Node.js build auto-initializes)
-- `createEncryptionStream(key, iv, options?)` — returns a `TransformStream` that encrypts each chunk
-- `createDecryptionStream(key, iv, options?)` — returns a `TransformStream` that decrypts and verifies each chunk
+- `createEncryptionStream(key, iv, options?)` — returns a `TransformStream` that encrypts a stream of plaintext data.
+- `createDecryptionStream(key, iv, options?)` — returns a `TransformStream` that decrypts a stream of encrypted data.
 
 ## Streaming Usage
 
