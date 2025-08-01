@@ -10,7 +10,6 @@ export default {
     <html>
       <head>
         <script>
-          window.global = window;
           window.process = { env: {} };
         </script>
       </head>

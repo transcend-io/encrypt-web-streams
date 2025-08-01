@@ -18,7 +18,7 @@ void it('should create encrypt and decrypt streams', () => {
   const key = new Uint8Array(32).fill(1);
   const nonce = new Uint8Array(12).fill(2);
 
-  const encryptStream = createEncryptStream(key, nonce);
+  const encryptStream = createEncryptStream(key, nonce, false);
   const decryptStream = createDecryptStream(key, nonce);
 
   assert.ok(encryptStream, 'Encrypt stream should be created');

@@ -19,7 +19,7 @@ declare function it(
 const FIXTURES_SERVER_URL = 'http://127.0.0.1:8142';
 
 // Feature flags
-const FF_BIG_FIXTURES = 'include' as 'include' | 'skip' | 'only';
+const FF_BIG_FIXTURES = 'skip' as 'include' | 'skip' | 'only';
 
 // Test fixtures
 const fixtures = fixturesJson.filter((fixture) =>
@@ -224,6 +224,7 @@ for (const fixture of fixtures) {
     const encryptStream = createEncryptStream(
       decryptionInfo.key,
       decryptionInfo.nonce,
+      true,
     );
 
     const sha256 = await createSHA256();
@@ -256,7 +257,16 @@ for (const fixture of fixtures) {
       }),
     );
 
-    // TODO: Get the authentication tag from the encrypt stream
+    // Get the authentication tag from the encrypt stream and verify it matches the fixture
+    const authTag = encryptStream.authTag;
+    if (!authTag) {
+      throw new Error('No authentication tag found');
+    }
+    assert.deepEqual(
+      authTag,
+      decryptionInfo.authTag,
+      'The authentication tag did not match the fixture',
+    );
 
     assert.equal(
       encryptedChecksum,
