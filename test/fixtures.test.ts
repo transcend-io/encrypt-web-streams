@@ -1,7 +1,7 @@
 import { assert } from '@esm-bundle/chai';
-import fixturesJson from '../fixtures/files/fixtures.json' with { type: 'json' };
+import fixturesJson from './fixtures/files/fixtures.json' with { type: 'json' };
 import { createDecryptStream, init } from '../src/index.js';
-import type { Fixture } from '../fixtures/rebuild-fixtures.js';
+import type { Fixture } from './fixtures/rebuild-fixtures.js';
 import { createSHA256 } from 'hash-wasm';
 
 declare function it(

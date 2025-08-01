@@ -9,7 +9,7 @@ dist/
 .tsbuildinfo
 
 # Testing
-fixtures/files/**/*big*
+**/fixtures/files/**/*big*
 
 # OS
 .DS_Store
