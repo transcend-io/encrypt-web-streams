@@ -8,9 +8,13 @@ import {
 declare function it(name: string, callback: () => void): void;
 declare function it(name: string, callback: () => Promise<void>): Promise<void>;
 
-it('should initialize WASM module', async () => {
+it('should initialize WASM module from exported API', async () => {
   const wasm = await init();
   assert.ok(wasm, 'WASM module should be initialized');
+});
+
+it('should not throw if WASM module is already initialized', async () => {
+  await init();
 });
 
 it('should create encrypt and decrypt streams', () => {
