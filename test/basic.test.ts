@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import { assert } from '@esm-bundle/chai';
-import { Decryptor, Encryptor } from '../pkg/aes_gcm_stream_wasm.js';
+import { Decryptor, Encryptor } from '../wasm/aes_gcm_stream_wasm.js';
 import {
   createDecryptStream,
   createEncryptStream,

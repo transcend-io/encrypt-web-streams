@@ -26,7 +26,7 @@ const eslintConfig = tseslint.config(
     },
   },
   {
-    ignores: ['dist', 'pkg', 'rust'],
+    ignores: ['dist', 'wasm', 'rust'],
   },
 );
 

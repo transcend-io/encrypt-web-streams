@@ -1,5 +1,5 @@
 pnpm-lock.yaml
-pkg
+wasm
 node_modules
 dist
 rust

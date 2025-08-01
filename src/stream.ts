@@ -2,7 +2,7 @@ import initWasm, {
   Decryptor,
   Encryptor,
   type InitOutput,
-} from '../pkg/aes_gcm_stream_wasm.js';
+} from '../wasm/aes_gcm_stream_wasm.js';
 
 let _wasmReady: Promise<InitOutput> | undefined;
 export function init(): Promise<InitOutput> {

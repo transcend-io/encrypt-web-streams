@@ -46,7 +46,7 @@ cd aes_gcm_stream
 # Install dependencies
 pnpm install
 
-# Build the Rust WASM module (at pkg/*) for the browser
+# Build the Rust WASM module (at wasm/*) for the browser
 pnpm build
 
 # Run tests
@@ -55,7 +55,7 @@ pnpm test
 
 `pnpm build` produces:
 
-- `pkg/` directory containing the compiled WebAssembly module
+- `wasm/` directory containing the compiled WebAssembly module
 - `dist/` directory containing the TypeScript output for the library
 
 ## API Reference

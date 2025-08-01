@@ -18,20 +18,20 @@
   },
   "files": [
     "dist/",
-    "pkg/aes_gcm_stream_wasm_bg.wasm",
-    "pkg/aes_gcm_stream_wasm.js",
-    "pkg/aes_gcm_stream_wasm.d.ts"
+    "wasm/aes_gcm_stream_wasm_bg.wasm",
+    "wasm/aes_gcm_stream_wasm.js",
+    "wasm/aes_gcm_stream_wasm.d.ts"
   ],
   "scripts": {
     "build": "npm run build:rust && npm run build:js",
-    "build:rust": "cd rust && wasm-pack build --target web --out-dir ../pkg && rm ../pkg/.gitignore",
+    "build:rust": "cd rust && wasm-pack build --target web --out-dir ../wasm && rm ../wasm/.gitignore",
     "build:js": "tsc --project tsconfig.json",
     "test:rust": "cd rust && wasm-pack test --node && cargo test",
     "test:js": "web-test-runner --node-resolve --playwright --browsers chromium firefox webkit --files test/**/*.test.ts --files !test/speed.test.ts --files !test/fixtures.test.ts",
     "test:fixtures": "bash test.sh",
     "rebuild-fixtures": "tsx test/fixtures/rebuild-fixtures.ts",
     "benchmark": "web-test-runner --node-resolve --playwright --browsers chromium firefox webkit --files test/speed.test.ts",
-    "clean": "rm -rf pkg/ target/ dist/ rust/target/",
+    "clean": "rm -rf wasm/ dist/ rust/target/",
     "prepublishOnly": "npm run build",
     "lint": "pnpm run --parallel --aggregate-output \"/^lint:*/\"",
     "lint:prettier": "prettier --check . --log-level warn",
