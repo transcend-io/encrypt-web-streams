@@ -97,15 +97,26 @@ jobs:
         if: ${{ matrix.needs_playwright }}
         run: pnpm dlx playwright install --with-deps
 
+      - name: Cache fixtures
+        if: ${{ matrix.needs_fixtures }}
+        id: cache-fixtures
+        uses: actions/cache@v4
+        with:
+          path: |
+            test/fixtures/files/encrypted/
+            test/fixtures/files/fixtures.json
+            test/fixtures/files/unencrypted/big*.dat
+          key: ${{ runner.os }}-fixtures-${{ hashFiles('test/fixtures/**/*.ts', 'test/fixtures/files/unencrypted/**/*', '!test/fixtures/files/unencrypted/big*.dat') }}
+
+      - name: Rebuild fixtures
+        if: ${{ matrix.needs_fixtures }} && steps.cache-fixtures.outputs.cache-hit != 'true'
+        run: pnpm run rebuild-fixtures
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: dist-and-wasm
           path: .
-
-      - name: Rebuild fixtures
-        if: ${{ matrix.needs_fixtures }}
-        run: pnpm run rebuild-fixtures
 
       - name: Run tests (${{ matrix.test_name }})
         run: ${{ matrix.test_command }}
