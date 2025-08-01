@@ -83,6 +83,46 @@ try {
 }
 ```
 
+## With CryptoKey
+
+Since this is not WebCrypto, accepting a [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey) directly is not in scope of this library. However, you can derive a `Uint8Array` key from your `CryptoKey`, provided it's [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable):
+
+```ts
+// Export the CryptoKey as a Uint8Array, after validating it for its intended use
+async function getAesKey(
+  key: CryptoKey,
+  operation: 'encrypt' | 'decrypt',
+): Promise<Uint8Array> {
+  const errors: string[] = [];
+  if (key.algorithm.name !== 'AES-GCM') {
+    errors.push('Key is not an AES-GCM key');
+  }
+  if ((key.algorithm as AesKeyAlgorithm).length !== 256) {
+    errors.push('Key is not a 256-bit key');
+  }
+  if (!key.usages.includes(operation)) {
+    errors.push(`Key is not used for the requested operation: ${operation}`);
+  }
+  if (!key.extractable) {
+    errors.push('Key is not extractable');
+  }
+  if (errors.length > 0) {
+    throw new TypeError(
+      `The provided CryptoKey is not appropriate for the requested operation:\n - ${errors.join('\n - ')}`,
+    );
+  }
+
+  return new Uint8Array(await crypto.subtle.exportKey('raw', key));
+}
+
+// Usage example
+const iv = crypto.getRandomValues(new Uint8Array(12));
+const decryptStream = createDecryptStream(
+  await getAesKey(myCryptoKey, 'decrypt'),
+  iv,
+);
+```
+
 ---
 
 ## Development
