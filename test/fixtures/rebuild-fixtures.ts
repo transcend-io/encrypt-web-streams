@@ -11,9 +11,7 @@ import { generatePatternFile } from './generate-pattern-file.js';
 
 const thisDirname = path.dirname(new URL(import.meta.url).pathname);
 
-/**
- * A fixture is a remote resource with a checksum of the unencrypted file
- */
+/** A fixture is a remote resource with a checksum of the unencrypted file */
 export interface Fixture {
   encryptedPathname: string;
   unencryptedPathname: string;
@@ -22,11 +20,11 @@ export interface Fixture {
   encryptedSize: number;
   unencryptedSize: number;
   decryptionOptions: {
-    /** base64-encoded */
+    /** Base64-encoded */
     key: string;
-    /** base64-encoded */
+    /** Base64-encoded */
     iv: string;
-    /** base64-encoded */
+    /** Base64-encoded */
     authTag: string;
   };
   /** The checksum of the unencrypted file. Hex-encoded. */
@@ -56,9 +54,7 @@ const bigGeneratedFiles: {
   },
 ];
 
-/**
- * Rebuild the files.js file to use the local server.
- */
+// Rebuild the files.js file to use the local server
 async function main(): Promise<void> {
   // Generate the big files that aren't checked into git
   console.group("Generating big files that aren't checked into git");

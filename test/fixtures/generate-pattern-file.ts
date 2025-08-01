@@ -3,9 +3,10 @@ import path from 'node:path';
 import { createCipheriv, createHash } from 'node:crypto';
 
 /**
- * Generates a file of a specified size with a deterministic pattern based on a seed.
- * It uses a stream cipher to produce a consistent, pseudo-random byte stream from the seed,
- * ensuring that the file content is identical every time for the same seed.
+ * Generates a file of a specified size with a deterministic pattern based on a
+ * seed. It uses a stream cipher to produce a consistent, pseudo-random byte
+ * stream from the seed, ensuring that the file content is identical every time
+ * for the same seed.
  *
  * @param filePath The full path for the file to be created.
  * @param sizeInBytes The desired file size in bytes.

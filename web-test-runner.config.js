@@ -6,6 +6,7 @@ const TIMEOUT_MS = 5 * 60 * 1000;
 
 /**
  * Pass environment variables to the test environment.
+ *
  * @type {Record<string, string>}
  */
 const environment = {

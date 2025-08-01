@@ -5,7 +5,7 @@ import {
   createDecryptStream,
 } from '../src/index.js';
 
-// Initialize the WASM module
+// Initialize the Wasm module
 await init();
 
 // Create a key and iv
@@ -45,7 +45,7 @@ bench
   .add('aes_gcm_stream_wasm', async () => {
     // Streams
     const readableStream = makeReadableStream();
-    const encryptStream = createEncryptStream(key, iv, false);
+    const encryptStream = createEncryptStream(key, iv);
     const decryptStream = createDecryptStream(key, iv);
 
     await readableStream

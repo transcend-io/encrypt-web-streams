@@ -4,9 +4,9 @@ import initWasm, { Decryptor, Encryptor } from '../wasm/aes_gcm_stream_wasm.js';
 declare function it(name: string, callback: () => void): void;
 declare function it(name: string, callback: () => Promise<void>): Promise<void>;
 
-it('should initialize WASM module', async () => {
+it('should initialize Wasm module', async () => {
   const wasm = await initWasm();
-  assert.ok(wasm, 'WASM module should be initialized');
+  assert.ok(wasm, 'Wasm module should be initialized');
 });
 
 it('should encrypt data directly with Encryptor', () => {

@@ -27,12 +27,12 @@ function createReadableStream(data: Uint8Array): ReadableStream<Uint8Array> {
   });
 }
 
-it('should initialize WASM module from exported API', async () => {
+it('should initialize Wasm module from exported API', async () => {
   const wasm = await init();
-  assert.ok(wasm, 'WASM module should be initialized');
+  assert.ok(wasm, 'Wasm module should be initialized');
 });
 
-it('should not throw if WASM module is already initialized', async () => {
+it('should not throw if Wasm module is already initialized', async () => {
   await init();
 });
 
@@ -40,7 +40,7 @@ it('should create encrypt and decrypt streams', () => {
   const key = new Uint8Array(32).fill(1);
   const iv = new Uint8Array(12).fill(2);
 
-  const encryptStream = createEncryptStream(key, iv, false);
+  const encryptStream = createEncryptStream(key, iv);
   const decryptStream = createDecryptStream(key, iv);
 
   assert.ok(encryptStream, 'Encrypt stream should be created');
@@ -52,7 +52,7 @@ it('should fail to create create encrypt and decrypt streams when key is not 32 
   const iv = new Uint8Array(12).fill(2);
 
   assert.throws(
-    () => createEncryptStream(key, iv, false),
+    () => createEncryptStream(key, iv),
     /Key must be 32 bytes/,
     'createEncryptStream should fail when key is not 32 bytes',
   );
@@ -74,7 +74,7 @@ it('should encrypt a single chunk of data', async () => {
       controller.close();
     },
   })
-    .pipeThrough(createEncryptStream(key, iv, false))
+    .pipeThrough(createEncryptStream(key, iv))
     .pipeTo(new WritableStream());
 });
 
@@ -85,7 +85,7 @@ it('should encrypt and decrypt 1 byte of data', async () => {
 
   const decryptedData = await streamToUint8Array(
     createReadableStream(unencryptedData)
-      .pipeThrough(createEncryptStream(key, iv, false))
+      .pipeThrough(createEncryptStream(key, iv))
       .pipeThrough(createDecryptStream(key, iv)),
   );
 
@@ -108,7 +108,7 @@ it('when encrypting and decrypting 0 bytes of data, the decrypted data should ha
 
   const decryptedData = await streamToUint8Array(
     createReadableStream(unencryptedData)
-      .pipeThrough(createEncryptStream(key, iv, false))
+      .pipeThrough(createEncryptStream(key, iv))
       .pipeThrough(createDecryptStream(key, iv)),
   );
 
@@ -131,7 +131,7 @@ it('should encrypt and decrypt several chunks of data of varying sizes', async (
 
   const decryptedData = await streamToUint8Array(
     createReadableStream(unencryptedData)
-      .pipeThrough(createEncryptStream(key, iv, false))
+      .pipeThrough(createEncryptStream(key, iv))
       .pipeThrough(createDecryptStream(key, iv)),
   );
 

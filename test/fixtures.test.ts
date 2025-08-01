@@ -32,7 +32,7 @@ const fixtures = fixturesJson.filter((fixture) =>
       : fixture.filePrefix.includes('big'),
 ) as Fixture[];
 
-// Initialize WASM
+// Initialize Wasm
 await init();
 
 /** Helper to convert base64-encoded string to Uint8Array */
@@ -52,7 +52,10 @@ function base64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
-/** Helper to get decryption info from fixture. This is the metadata from the encryption process. */
+/**
+ * Helper to get decryption info from fixture. This is the metadata from the
+ * encryption process.
+ */
 function getDecryptionInfo(fixture: Fixture) {
   return {
     key: base64ToUint8Array(fixture.decryptionOptions.key),
@@ -226,7 +229,7 @@ for (const fixture of fixtures) {
     const encryptStream = createEncryptStream(
       decryptionInfo.key,
       decryptionInfo.iv,
-      true,
+      { detachAuthTag: true },
     );
 
     const sha256 = await createSHA256();

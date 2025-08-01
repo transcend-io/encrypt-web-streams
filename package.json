@@ -1,8 +1,7 @@
 {
-  "name": "@bencmbrook/aes_gcm_stream",
+  "name": "@bencmbrook/encrypt-web-streams",
   "version": "0.2.0",
-  "private": false,
-  "description": "WebAssembly-powered streaming AES-256-GCM implementation",
+  "description": "WebAssembly-powered streaming AES-256-GCM encryption and decryption with a web-native TransformStream API.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -43,21 +42,7 @@
     "lint:eslint": "eslint .",
     "format": "prettier --write ."
   },
-  "keywords": [
-    "aes",
-    "gcm",
-    "streaming",
-    "webassembly",
-    "wasm",
-    "web-streams",
-    "encryption",
-    "crypto"
-  ],
-  "author": "Ben Brook",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@esm-bundle/chai": "4.3.4-fix.0",
@@ -73,6 +58,7 @@
     "http-server": "^14.1.1",
     "mime": "^4.0.7",
     "prettier": "^3.6.2",
+    "prettier-plugin-jsdoc": "^1.3.3",
     "pretty-bytes": "^7.0.0",
     "pretty-ms": "^9.2.0",
     "tinybench": "^4.0.1",
@@ -81,5 +67,25 @@
     "typescript-eslint": "^8.38.0",
     "wasm-pack": "^0.13.1"
   },
-  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
+  "author": "Ben Brook",
+  "license": "MIT",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748",
+  "keywords": [
+    "aes",
+    "gcm",
+    "streaming",
+    "webassembly",
+    "typescript",
+    "javascript",
+    "wasm",
+    "web-streams",
+    "web",
+    "web-native",
+    "encryption",
+    "crypto"
+  ]
 }
