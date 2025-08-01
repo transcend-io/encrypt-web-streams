@@ -21,7 +21,7 @@ const cryptoKey = await crypto.subtle.importKey(
   ['encrypt', 'decrypt'],
 );
 
-const NUM_CHUNKS = 1;
+const NUM_CHUNKS = 1000;
 const CHUNK_SIZE = 1024;
 
 function makeReadableStream(): ReadableStream<Uint8Array> {
