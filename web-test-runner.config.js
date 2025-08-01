@@ -1,6 +1,7 @@
 import { esbuildPlugin } from '@web/dev-server-esbuild';
 
-const timeout = 5 * 60 * 1000;
+/** The timeout for all tests in milliseconds */
+const TIMEOUT_MS = 5 * 60 * 1000;
 
 /** @type {import('@web/test-runner').TestRunnerConfig} */
 export default {
@@ -20,9 +21,9 @@ export default {
   `,
   testFramework: {
     config: {
-      timeout,
+      timeout: TIMEOUT_MS,
     },
   },
-  testsFinishTimeout: timeout,
+  testsFinishTimeout: TIMEOUT_MS,
   concurrentBrowsers: 3,
 };

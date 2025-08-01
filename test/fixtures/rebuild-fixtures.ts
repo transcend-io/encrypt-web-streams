@@ -36,18 +36,20 @@ const bigGeneratedFiles: {
   filename: `big${number}${'MB' | 'GB'}.dat`;
   size: number;
   seed: string;
+  enabled: boolean;
 }[] = [
   {
     filename: 'big800MB.dat',
     size: 800 * 1024 * 1024,
     seed: 'foo',
+    enabled: true,
   },
-  // {
-  //   // Uncomment this to test a 6GB file
-  //   filename: 'big6GB.dat',
-  //   size: 6 * 1024 * 1024 * 1024,
-  //   seed: 'bar',
-  // },
+  {
+    filename: 'big6GB.dat',
+    size: 6 * 1024 * 1024 * 1024,
+    seed: 'bar',
+    enabled: false, // switch to true to test a 6GB file
+  },
 ];
 
 /**
@@ -57,6 +59,12 @@ async function main(): Promise<void> {
   // Generate the big files that aren't checked into git
   console.group("Generating big files that aren't checked into git");
   for (const bigGeneratedFile of bigGeneratedFiles) {
+    await rm(
+      path.join(thisDirname, '/files/unencrypted', bigGeneratedFile.filename),
+    );
+    if (!bigGeneratedFile.enabled) {
+      continue;
+    }
     const filePath = path.join(
       thisDirname,
       '/files/unencrypted',

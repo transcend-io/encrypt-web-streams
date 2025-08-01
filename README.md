@@ -138,9 +138,9 @@ Run `pnpm benchmark` to see the speed of the implementation and compare it again
 
 On M3 Pro, decrypting a 6.3GB file:
 
-- in Chromium (i.e., Chrome), this implementation decrypts at 59.4 MB/s with 3 MB of memory usage.
-- in Webkit (i.e., Safari), this implementation decrypts at 59.4 MB/s with 3 MB of memory usage.
-- in Firefox, this implementation decrypts at 4.3 MB/s with 3 MB of memory usage.
+- in Chromium (i.e., Chrome), this implementation decrypts at 60 MB/s with 3 MB of memory usage.
+- in Webkit (i.e., Safari), this implementation decrypts at 60 MB/s with 3 MB of memory usage.
+- in Firefox, this implementation decrypts at 4 MB/s with 3 MB of memory usage.
 
 ## Supporting Large Files
 
@@ -150,6 +150,10 @@ Second, there are volumes of data for which counting the volume of data itself b
 
 In Wasm, it's a bit more complicated. The Rust crate, `aes-gcm-stream`, originally used `usize` bit counters, which in Wasm is `u32`, and thus the bit counter overflowed at 536 MB. This repo patches that crate to use `u64` for the counter, meaning the theoretical maximum file size is 2^64 bytes, or 16 EB. Using this in Wasm requires similar attention to any counters you implement.
 
-However, some browsers may have built-in counters which will fail when streaming large amounts of data.
+However, some browsers may have built-in counters which will fail when streaming large amounts of data:
 
-In general, staying under 4.29 GB per file is the safest guarantee for wide browser support.
+- Chromium (i.e., Chrome): unlimited data (fast; 60 MB/s)
+- Webkit (i.e., Safari): OOM error at files > ~3 GB (fast; 60 MB/s)
+- Firefox: unlimited data (slow; 4 MB/s)
+
+In general, staying under 3 GB per stream is the safest guarantee for wide browser support.
