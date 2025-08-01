@@ -1,5 +1,7 @@
 import { esbuildPlugin } from '@web/dev-server-esbuild';
 
+const timeout = 2 * 60 * 1000; // 2 minutes
+
 /** @type {import('@web/test-runner').TestRunnerConfig} */
 export default {
   plugins: [esbuildPlugin({ ts: true })],
@@ -18,8 +20,9 @@ export default {
   `,
   testFramework: {
     config: {
-      timeout: 20 * 60 * 1000, // 20 minutes
+      timeout,
     },
   },
-  testsFinishTimeout: 20 * 60 * 1000, // 20 minutes
+  testsFinishTimeout: timeout,
+  concurrentBrowsers: 3,
 };
