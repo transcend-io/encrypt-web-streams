@@ -5,9 +5,6 @@ kill $(lsof -t -i:8142) || true
 # Start the fixtures server
 pnpm exec http-server test/fixtures -p 8142 --cors &
 
-# Build the project
-pnpm run build
-
 # # Run the tests, and pass additional arguments to the web-test-runner
 pnpm exec web-test-runner --files test/fixtures.test.ts --node-resolve --playwright --browsers chromium firefox webkit "$@"
 
