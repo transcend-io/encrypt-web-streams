@@ -18,7 +18,7 @@ export interface Fixture {
   url: string;
   filePrefix: string;
   mimetype: string | undefined;
-  size?: number;
+  size: number;
   decryptionOptions: {
     /** base64-encoded */
     key: string;
@@ -143,7 +143,7 @@ async function main(): Promise<void> {
   console.groupEnd();
 
   // Sort by file size (ascending)
-  fixtures = fixtures.sort((a, b) => (a.size ?? 0) - (b.size ?? 0));
+  fixtures = fixtures.sort((a, b) => a.size - b.size);
 
   await writeFile(
     path.join(thisDirname, 'files/fixtures.json'),

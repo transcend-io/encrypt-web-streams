@@ -141,16 +141,5 @@
       "authTag": "z4Hew8QHz7NdXgjsj4HkSQ=="
     },
     "unencryptedChecksum": "993fa9204ce8d91abae9f7c07998e1e845cfb48e8e004d3cc6d7833041a36fd4"
-  },
-  {
-    "url": "/files/encrypted/big6GB.dat.enc",
-    "filePrefix": "big6GB",
-    "size": 6442450944,
-    "decryptionOptions": {
-      "key": "vScyqmJKqGl73mJkuwm/zPBQk0wct9eQ5wPE8laGcWM=",
-      "iv": "6lNU+2vxJw6SFgse",
-      "authTag": "0fgcPUPfBxTE5oOpR98WaA=="
-    },
-    "unencryptedChecksum": "c8495d081f66424b3b673a3ebaa8c5f0e137ea57d04b5d32579262396a53b3f9"
   }
 ]

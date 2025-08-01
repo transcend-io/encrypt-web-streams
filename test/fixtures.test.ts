@@ -3,6 +3,8 @@ import fixturesJson from './fixtures/files/fixtures.json' with { type: 'json' };
 import { createDecryptStream, init } from '../src/index.js';
 import type { Fixture } from './fixtures/rebuild-fixtures.js';
 import { createSHA256 } from 'hash-wasm';
+import prettyMilliseconds from 'pretty-ms';
+import prettyBytes from 'pretty-bytes';
 
 declare function it(
   name: string,
@@ -78,6 +80,8 @@ for (const fixture of fixtures) {
     const sha256 = await createSHA256();
     sha256.init();
 
+    const startTime = performance.now();
+
     // Stream decrypt the file and compute a checksum (in addition to built-in verification of the authentication tag)
     let decryptedChecksum: string | undefined;
     await sourceStream.pipeThrough(decryptStream).pipeTo(
@@ -109,7 +113,14 @@ for (const fixture of fixtures) {
       'The decryption stream was successful and passed authentication tag verification, yet our own checksums did not match',
     );
 
-    console.log(`Successfully decrypted ${fixture.filePrefix}`);
+    const endTime = performance.now();
+    const timingMs = endTime - startTime;
+    const timingPretty = prettyMilliseconds(timingMs);
+    const sizePretty = prettyBytes(fixture.size);
+    const bitratePretty = prettyBytes(fixture.size / (timingMs / 1000));
+    console.log(
+      `Successfully decrypted ${fixture.filePrefix} in ${timingPretty} (${bitratePretty}/s) - ${sizePretty} total.`,
+    );
   });
 }
 
