@@ -116,8 +116,10 @@ for (const fixture of fixtures) {
     const endTime = performance.now();
     const timingMs = endTime - startTime;
     const timingPretty = prettyMilliseconds(timingMs);
-    const sizePretty = prettyBytes(fixture.size);
-    const bitratePretty = prettyBytes(fixture.size / (timingMs / 1000));
+    const sizePretty = prettyBytes(fixture.encryptedSize);
+    const bitratePretty = prettyBytes(
+      fixture.encryptedSize / (timingMs / 1000),
+    );
     console.log(
       `Successfully decrypted ${fixture.filePrefix} in ${timingPretty} (${bitratePretty}/s) - ${sizePretty} total.`,
     );

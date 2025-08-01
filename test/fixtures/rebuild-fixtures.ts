@@ -18,7 +18,8 @@ export interface Fixture {
   url: string;
   filePrefix: string;
   mimetype: string | undefined;
-  size: number;
+  encryptedSize: number;
+  unencryptedSize: number;
   decryptionOptions: {
     /** base64-encoded */
     key: string;
@@ -27,8 +28,10 @@ export interface Fixture {
     /** base64-encoded */
     authTag: string;
   };
-  /** The checksum of the unencrypted file */
+  /** The checksum of the unencrypted file. Hex-encoded. */
   unencryptedChecksum: string;
+  /** The checksum of the encrypted file. Hex-encoded. */
+  encryptedChecksum: string;
 }
 
 /** We can't check these into git, so we generate them here. */
@@ -61,6 +64,7 @@ async function main(): Promise<void> {
   for (const bigGeneratedFile of bigGeneratedFiles) {
     await rm(
       path.join(thisDirname, '/files/unencrypted', bigGeneratedFile.filename),
+      { force: true },
     );
     if (!bigGeneratedFile.enabled) {
       continue;
@@ -99,10 +103,11 @@ async function main(): Promise<void> {
     console.debug(`Generating fixture for ${file} ...`);
     const filePrefix = path.basename(file, path.extname(file));
     const encryptedFilePathname = `/files/encrypted/${file}.enc`;
+    const unencryptedFilePathname = `/files/unencrypted/${file}`;
 
     // Write an encrypted file
     const content = createReadStream(
-      path.join(thisDirname, '/files/unencrypted', file),
+      path.join(thisDirname, unencryptedFilePathname),
     );
     const cipher = createCipheriv(
       'aes-256-gcm',
@@ -119,18 +124,37 @@ async function main(): Promise<void> {
     const encryptedFileStats = await stat(encryptedFilePath);
     const encryptedFileSize = encryptedFileStats.size;
 
-    // Create a checksum of the unencrypted file
-    const unencryptedChecksum = await new Promise<string>((resolve, reject) => {
+    // Create a checksum of the encrypted file
+    const encryptedChecksum = await new Promise<string>((resolve, reject) => {
       const content = createReadStream(
-        path.join(thisDirname, '/files/unencrypted', file),
+        path.join(thisDirname, encryptedFilePathname),
       );
       const hash = createHash('sha256');
       content.on('data', (chunk) => {
         hash.update(chunk);
       });
       content.on('end', () => {
-        const unencryptedChecksum = hash.digest('hex');
-        resolve(unencryptedChecksum);
+        resolve(hash.digest('hex'));
+      });
+      content.on('error', reject);
+    });
+
+    // Get the file size of the unencrypted file
+    const unencryptedFilePath = path.join(thisDirname, unencryptedFilePathname);
+    const unencryptedFileStats = await stat(unencryptedFilePath);
+    const unencryptedFileSize = unencryptedFileStats.size;
+
+    // Create a checksum of the unencrypted file
+    const unencryptedChecksum = await new Promise<string>((resolve, reject) => {
+      const content = createReadStream(
+        path.join(thisDirname, unencryptedFilePathname),
+      );
+      const hash = createHash('sha256');
+      content.on('data', (chunk) => {
+        hash.update(chunk);
+      });
+      content.on('end', () => {
+        resolve(hash.digest('hex'));
       });
       content.on('error', reject);
     });
@@ -139,19 +163,21 @@ async function main(): Promise<void> {
       url: encryptedFilePathname,
       filePrefix,
       mimetype: mime.getType(file) ?? undefined,
-      size: encryptedFileSize,
+      encryptedSize: encryptedFileSize,
+      unencryptedSize: unencryptedFileSize,
       decryptionOptions: {
         key: TEST_ENCRYPTION_KEY,
         iv: TEST_ENCRYPTION_IV,
         authTag: cipher.getAuthTag().toString('base64'),
       },
       unencryptedChecksum,
+      encryptedChecksum,
     });
   }
   console.groupEnd();
 
   // Sort by file size (ascending)
-  fixtures = fixtures.sort((a, b) => a.size - b.size);
+  fixtures = fixtures.sort((a, b) => a.encryptedSize - b.encryptedSize);
 
   await writeFile(
     path.join(thisDirname, 'files/fixtures.json'),
