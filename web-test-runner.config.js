@@ -1,7 +1,17 @@
+// @ts-check
 import { esbuildPlugin } from '@web/dev-server-esbuild';
 
 /** The timeout for all tests in milliseconds */
 const TIMEOUT_MS = 5 * 60 * 1000;
+
+/**
+ * Pass environment variables to the test environment.
+ * @type {Record<string, string>}
+ */
+const environment = {
+  /** @type {'include' | 'skip' | 'only'} */
+  FF_BIG_FIXTURES: 'include',
+};
 
 /** @type {import('@web/test-runner').TestRunnerConfig} */
 export default {
@@ -10,7 +20,7 @@ export default {
     <html>
       <head>
         <script>
-          window.process = { env: {} };
+          window.environment = ${JSON.stringify(environment)};
         </script>
       </head>
       <body>

@@ -12,14 +12,17 @@ import prettyBytes from 'pretty-bytes';
 
 declare function it(name: string, callback: () => void): void;
 declare function it(name: string, callback: () => Promise<void>): Promise<void>;
+declare global {
+  var environment: Record<string, string>;
+}
 
 // Constants
 const FIXTURES_SERVER_URL = 'http://127.0.0.1:8142';
 
 // Feature flags
-const FF_BIG_FIXTURES = 'skip' as 'include' | 'skip' | 'only';
+const FF_BIG_FIXTURES = globalThis.environment['FF_BIG_FIXTURES'] ?? 'include';
 
-// Test fixtures
+// Get test fixtures
 const fixtures = fixturesJson.filter((fixture) =>
   FF_BIG_FIXTURES === 'include'
     ? true

@@ -27,7 +27,7 @@ stop_server() {
 stop_server
 
 # Start the fixtures server
-pnpm exec http-server test/fixtures --port 8142 --cors --silent &
+NODE_OPTIONS='--no-deprecation' pnpm exec http-server test/fixtures --port 8142 --cors --silent &
 
 # Parse the browsers from the --browsers arguments, or use the default
 DEFAULT_BROWSERS=("chromium" "webkit" "firefox")
