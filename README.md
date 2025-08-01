@@ -136,9 +136,11 @@ pnpm test:rust
 
 Run `pnpm benchmark` to see the speed of the implementation and compare it against WebCrypto (but note that WebCrypto cannot stream, so it's not a perfect comparison).
 
-On M3 Pro in Chromium (i.e., Chrome), this implementation decrypts a 6.3GB file at 59.4 MB/s with 3 MB of memory usage.
+On M3 Pro, decrypting a 6.3GB file:
 
-Webkit (i.e., Safari) performs similarly. Firefox runs much slower.
+- in Chromium (i.e., Chrome), this implementation decrypts at 59.4 MB/s with 3 MB of memory usage.
+- in Webkit (i.e., Safari), this implementation decrypts at 59.4 MB/s with 3 MB of memory usage.
+- in Firefox, this implementation decrypts at 4.3 MB/s with 3 MB of memory usage.
 
 ## Supporting Large Files
 

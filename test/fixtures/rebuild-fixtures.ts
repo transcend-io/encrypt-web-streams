@@ -42,8 +42,8 @@ const bigGeneratedFiles: {
     size: 800 * 1024 * 1024,
     seed: 'foo',
   },
-  // // Uncomment this to test a 6GB file
   // {
+  //   // Uncomment this to test a 6GB file
   //   filename: 'big6GB.dat',
   //   size: 6 * 1024 * 1024 * 1024,
   //   seed: 'bar',
