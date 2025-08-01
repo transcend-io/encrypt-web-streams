@@ -26,38 +26,6 @@ Install the published package via npm:
 npm install @bencmbrook/aes_gcm_stream
 ```
 
-If you plan to build from source, skip to [Building from Source](#building-from-source).
-
----
-
-## Building from Source
-
-### Prerequisites
-
-- Rust (edition 2024)
-- [`wasm-pack`](https://github.com/rustwasm/wasm-pack)
-- Node.js / bundler that supports ES modules
-
-```bash
-# Clone this repository
-git clone https://github.com/bencmbrook/aes_gcm_stream.git
-cd aes_gcm_stream
-
-# Install dependencies
-pnpm install
-
-# Build the Rust WASM module (at wasm/*) for the browser
-pnpm build
-
-# Run tests
-pnpm test
-```
-
-`pnpm build` produces:
-
-- `wasm/` directory containing the compiled WebAssembly module
-- `dist/` directory containing the TypeScript output for the library
-
 ## API Reference
 
 Provides TransformStreams for AES-256-GCM encryption and decryption.
@@ -113,6 +81,55 @@ try {
 } catch (error) {
   console.error(error);
 }
+```
+
+---
+
+## Development
+
+This project uses Rust for the WebAssembly module and TypeScript for the JavaScript/Node.js wrapper.
+
+### Prerequisites
+
+- **Node.js**: Use [`nvm`](https://github.com/nvm-sh/nvm) to install a recent version of Node.js. This project specifies the current version in [`.nvmrc`](.nvmrc).
+
+- **pnpm**: This project uses `pnpm`. After installing Node.js, enable `corepack` to use `pnpm`:
+
+  ```bash
+  npm install -g corepack
+  corepack enable
+  ```
+
+- **Rust**: Install Rust and Cargo via [`rustup`](https://rustup.rs/):
+
+### Setup and Building
+
+```bash
+# Install project dependencies
+pnpm install
+
+# Build the Rust WASM module and TypeScript
+pnpm build
+```
+
+`pnpm build` produces:
+
+- `wasm/` directory containing the compiled WebAssembly module
+- `dist/` directory containing the TypeScript output for the library
+
+### Running Tests
+
+Run the tests with:
+
+```bash
+# Run tests in chromium, firefox, and webkit browsers
+pnpm test:js
+
+# Run tests in chromium, firefox, and webkit browsers. Takes a while to run since it processes 6GB files
+pnpm test:fixtures
+
+# Run tests in Rust
+pnpm test:rust
 ```
 
 ## Stats
