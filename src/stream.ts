@@ -15,92 +15,33 @@ export function init(): Promise<InitOutput> {
   return _wasmReady;
 }
 
-class EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
-  /** Whether the authentication tag is detached from the ciphertext. */
-  private _detachAuthTag: boolean;
-  /** The authentication tag, if it was detached. */
-  private _authTag: Uint8Array | undefined;
-
+/**
+ * An encrypted TransformStream with a method to retrieve the authentication tag.
+ */
+export interface EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
   /**
    * Get the authentication tag.
    *
    * The getAuthTag() method should ONLY be called if:
-   *   1. `detachAuthTag` was true in the constructor.
+   *   1. `detachAuthTag` was true when the stream was created.
    *   2. The encryption stream has been fully read.
    *
-   * getAuthTag() will throw a TypeError if `detachAuthTag` was false in the constructor.
+   * getAuthTag() will throw a TypeError if `detachAuthTag` was false.
    * getAuthTag() will return `undefined` if the encryption stream has not completed.
    */
-  public getAuthTag(): Uint8Array | undefined {
-    if (!this._detachAuthTag) {
-      throw new TypeError(
-        'The authentication tag is not available when `detachAuthTag` is false.' +
-          '\nIt will be appended to the ciphertext.',
-      );
-    }
-    return this._authTag;
-  }
-
-  private constructor(
-    transformer: Transformer<Uint8Array, Uint8Array>,
-    detachAuthTag: boolean,
-  ) {
-    super(transformer);
-    this._detachAuthTag = detachAuthTag;
-  }
-
-  static create(
-    key: Uint8Array,
-    nonce: Uint8Array,
-    detachAuthTag: boolean,
-    adata?: Uint8Array,
-  ): EncryptStream {
-    const enc = new Encryptor(key, nonce);
-    if (adata) enc.init_adata(adata);
-
-    let hasData = false;
-    // eslint-disable-next-line prefer-const
-    let stream: EncryptStream;
-
-    const transformer: Transformer<Uint8Array, Uint8Array> = {
-      transform(chunk, controller) {
-        // ensure Uint8Array
-        const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
-        const out = enc.update(buf);
-        hasData = true;
-        // Only enqueue if there's actual output
-        if (out.length > 0) {
-          controller.enqueue(out);
-        }
-      },
-      flush(controller) {
-        if (hasData) {
-          const final = enc.finalize();
-          const remainingBytes = final.slice(0, -16);
-          const authTag = final.slice(-16);
-
-          // Enqueue remaining bytes
-          controller.enqueue(remainingBytes);
-
-          if (detachAuthTag) {
-            // Store auth tag separately
-            stream._authTag = authTag;
-          } else {
-            // Append auth tag
-            controller.enqueue(authTag);
-          }
-        }
-      },
-    };
-
-    stream = new EncryptStream(transformer, detachAuthTag);
-
-    return stream;
-  }
+  getAuthTag(): Uint8Array | undefined;
 }
 
 /**
  * Create a native TransformStream that encrypts via the WASM Encryptor.
+ *
+ * @param key - 32-byte encryption key
+ * @param nonce - 12-byte nonce (recommended)
+ * @param detachAuthTag - If true, the authentication tag will not be appended to the ciphertext
+ *                        and must be retrieved with `getAuthTag()` after the stream is complete.
+ * @param adata - Optional additional authenticated data
+ *
+ * @returns An `EncryptStream`, which is a `TransformStream` with an added `getAuthTag()` method.
  */
 export function createEncryptStream(
   key: Uint8Array,
@@ -108,7 +49,56 @@ export function createEncryptStream(
   detachAuthTag: boolean,
   adata?: Uint8Array,
 ): EncryptStream {
-  return EncryptStream.create(key, nonce, detachAuthTag, adata);
+  const enc = new Encryptor(key, nonce);
+  if (adata) enc.init_adata(adata);
+
+  let hasData = false;
+  let authTag: Uint8Array | undefined;
+
+  const stream = new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      // ensure Uint8Array
+      const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
+      const out = enc.update(buf);
+      hasData = true;
+      // Only enqueue if there's actual output
+      if (out.length > 0) {
+        controller.enqueue(out);
+      }
+    },
+    flush(controller) {
+      if (hasData) {
+        const final = enc.finalize();
+        const remainingBytes = final.slice(0, -16);
+        const finalAuthTag = final.slice(-16);
+
+        // Enqueue remaining bytes
+        controller.enqueue(remainingBytes);
+
+        if (detachAuthTag) {
+          // Store auth tag separately
+          authTag = finalAuthTag;
+        } else {
+          // Append auth tag
+          controller.enqueue(finalAuthTag);
+        }
+      }
+    },
+  });
+
+  // Augment the stream with the getAuthTag method
+  const encryptStream = stream as EncryptStream;
+  encryptStream.getAuthTag = () => {
+    if (!detachAuthTag) {
+      throw new TypeError(
+        'The authentication tag is not available when `detachAuthTag` is false.' +
+          '\nIt will be appended to the ciphertext.',
+      );
+    }
+    return authTag;
+  };
+
+  return encryptStream;
 }
 
 /**
