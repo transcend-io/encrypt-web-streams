@@ -49,56 +49,63 @@ export function createEncryptStream(
   detachAuthTag: boolean,
   adata?: Uint8Array,
 ): EncryptStream {
-  const enc = new Encryptor(key, iv);
-  if (adata) enc.init_adata(adata);
+  try {
+    const enc = new Encryptor(key, iv);
+    if (adata) enc.init_adata(adata);
 
-  let hasData = false;
-  let authTag: Uint8Array | undefined;
+    let hasData = false;
+    let authTag: Uint8Array | undefined;
 
-  const stream = new TransformStream<Uint8Array, Uint8Array>({
-    transform(chunk, controller) {
-      // ensure Uint8Array
-      const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
-      const out = enc.update(buf);
-      hasData = true;
-      // Only enqueue if there's actual output
-      if (out.length > 0) {
-        controller.enqueue(out);
-      }
-    },
-    flush(controller) {
-      if (hasData) {
-        const final = enc.finalize();
-        const remainingBytes = final.slice(0, -16);
-        const finalAuthTag = final.slice(-16);
-
-        // Enqueue remaining bytes
-        controller.enqueue(remainingBytes);
-
-        if (detachAuthTag) {
-          // Store auth tag separately
-          authTag = finalAuthTag;
-        } else {
-          // Append auth tag
-          controller.enqueue(finalAuthTag);
+    const stream = new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        // ensure Uint8Array
+        const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
+        const out = enc.update(buf);
+        hasData = true;
+        // Only enqueue if there's actual output
+        if (out.length > 0) {
+          controller.enqueue(out);
         }
+      },
+      flush(controller) {
+        if (hasData) {
+          const final = enc.finalize();
+          const remainingBytes = final.slice(0, -16);
+          const finalAuthTag = final.slice(-16);
+
+          // Enqueue remaining bytes
+          controller.enqueue(remainingBytes);
+
+          if (detachAuthTag) {
+            // Store auth tag separately
+            authTag = finalAuthTag;
+          } else {
+            // Append auth tag
+            controller.enqueue(finalAuthTag);
+          }
+        }
+      },
+    });
+
+    // Augment the stream with the getAuthTag method
+    const encryptStream = stream as EncryptStream;
+    encryptStream.getAuthTag = () => {
+      if (!detachAuthTag) {
+        throw new TypeError(
+          'The authentication tag is not available when `detachAuthTag` is false.' +
+            '\nIt will be appended to the ciphertext.',
+        );
       }
-    },
-  });
+      return authTag;
+    };
 
-  // Augment the stream with the getAuthTag method
-  const encryptStream = stream as EncryptStream;
-  encryptStream.getAuthTag = () => {
-    if (!detachAuthTag) {
-      throw new TypeError(
-        'The authentication tag is not available when `detachAuthTag` is false.' +
-          '\nIt will be appended to the ciphertext.',
-      );
+    return encryptStream;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new TypeError(`Failed to create encrypt stream:`, { cause: error });
     }
-    return authTag;
-  };
-
-  return encryptStream;
+    throw new TypeError(`Failed to create encrypt stream: ${String(error)}`);
+  }
 }
 
 /**
@@ -117,36 +124,43 @@ export function createDecryptStream(
   detachedAuthTag?: Uint8Array,
   adata?: Uint8Array,
 ): TransformStream<Uint8Array, Uint8Array> {
-  const dec = new Decryptor(key, iv);
-  if (adata) dec.init_adata(adata);
+  try {
+    const dec = new Decryptor(key, iv);
+    if (adata) dec.init_adata(adata);
 
-  let hasData = false;
+    let hasData = false;
 
-  return new TransformStream({
-    transform(chunk, controller) {
-      const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
-      const out = dec.update(buf);
-      hasData = true;
-      // Only enqueue if there's actual output
-      if (out.length > 0) {
-        controller.enqueue(out);
-      }
-    },
-    flush(controller) {
-      if (hasData) {
-        if (detachedAuthTag) {
-          // Append the auth tag as the final chunk (else assume it's appended to the ciphertext)
-          const out = dec.update(detachedAuthTag);
-          if (out.length > 0) {
-            controller.enqueue(out);
+    return new TransformStream({
+      transform(chunk, controller) {
+        const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
+        const out = dec.update(buf);
+        hasData = true;
+        // Only enqueue if there's actual output
+        if (out.length > 0) {
+          controller.enqueue(out);
+        }
+      },
+      flush(controller) {
+        if (hasData) {
+          if (detachedAuthTag) {
+            // Append the auth tag as the final chunk (else assume it's appended to the ciphertext)
+            const out = dec.update(detachedAuthTag);
+            if (out.length > 0) {
+              controller.enqueue(out);
+            }
+          }
+          // might throw on auth failure
+          const last = dec.finalize();
+          if (last.length > 0) {
+            controller.enqueue(last);
           }
         }
-        // might throw on auth failure
-        const last = dec.finalize();
-        if (last.length > 0) {
-          controller.enqueue(last);
-        }
-      }
-    },
-  });
+      },
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new TypeError(`Failed to create encrypt stream:`, { cause: error });
+    }
+    throw new TypeError(`Failed to create encrypt stream: ${String(error)}`);
+  }
 }
