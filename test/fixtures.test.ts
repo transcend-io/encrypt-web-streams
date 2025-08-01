@@ -85,7 +85,7 @@ for (const fixture of fixtures) {
     const decryptStream = createDecryptStream(
       decryptionInfo.key,
       decryptionInfo.iv,
-      decryptionInfo.authTag,
+      { detachedAuthTag: decryptionInfo.authTag },
     );
 
     const sha256 = await createSHA256();
@@ -165,7 +165,7 @@ it('should fail authentication for malformed auth tag', async () => {
   const decryptStream = createDecryptStream(
     decryptionInfo.key,
     decryptionInfo.iv,
-    malformedAuthTag,
+    { detachedAuthTag: malformedAuthTag },
   );
 
   let expectedError: Error | undefined;

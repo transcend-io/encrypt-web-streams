@@ -8,7 +8,7 @@ import {
 declare function it(name: string, callback: () => void): void;
 declare function it(name: string, callback: () => Promise<void>): Promise<void>;
 
-async function streamToUint8Array(
+async function bufferEntireStream(
   readableStream: ReadableStream,
 ): Promise<Uint8Array> {
   const response = new Response(readableStream);
@@ -83,7 +83,7 @@ it('should encrypt and decrypt 1 byte of data', async () => {
   const iv = new Uint8Array(12).fill(2);
   const unencryptedData = new Uint8Array(1).fill(1);
 
-  const decryptedData = await streamToUint8Array(
+  const decryptedData = await bufferEntireStream(
     createReadableStream(unencryptedData)
       .pipeThrough(createEncryptStream(key, iv))
       .pipeThrough(createDecryptStream(key, iv)),
@@ -106,7 +106,7 @@ it('when encrypting and decrypting 0 bytes of data, the decrypted data should ha
   const iv = new Uint8Array(12).fill(2);
   const unencryptedData = new Uint8Array(0);
 
-  const decryptedData = await streamToUint8Array(
+  const decryptedData = await bufferEntireStream(
     createReadableStream(unencryptedData)
       .pipeThrough(createEncryptStream(key, iv))
       .pipeThrough(createDecryptStream(key, iv)),
@@ -129,7 +129,7 @@ it('should encrypt and decrypt several chunks of data of varying sizes', async (
   const iv = new Uint8Array(12).fill(2);
   const unencryptedData = new Uint8Array(1024 * 8 + 5).fill(1);
 
-  const decryptedData = await streamToUint8Array(
+  const decryptedData = await bufferEntireStream(
     createReadableStream(unencryptedData)
       .pipeThrough(createEncryptStream(key, iv))
       .pipeThrough(createDecryptStream(key, iv)),

@@ -37,28 +37,32 @@ export interface EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
 }
 
 /**
- * Create a native TransformStream that encrypts via the Wasm Encryptor.
+ * Create a native TransformStream that encrypts via a Wasm AES-GCM encryption
+ * implementation.
  *
- * @param key - 32-byte encryption key
- * @param iv - 12-byte iv (recommended)
- * @param options - Optional options
- * @param options.detachAuthTag - Defaults to false. If true, the authentication
- *   tag will not be appended to the ciphertext and must be retrieved with
- *   `getAuthTag()` after the stream is complete.
- * @param options.additionalData - Optional additional authenticated data
- * @returns An `EncryptStream`, which is a `TransformStream` with an added
- *   `getAuthTag()` method.
+ * @param {Uint8Array} key - 32-byte encryption key
+ * @param {Uint8Array} iv - 12-byte iv (recommended)
+ * @param {Object} options - Optional options
+ * @param {Uint8Array} options.additionalData - Optional additional
+ *   authenticated data
+ * @param {boolean} [options.detachAuthTag=false] - If `true`, the
+ *   authentication tag will not be appended to the ciphertext and must be
+ *   retrieved with `getAuthTag()` after the stream is complete. Default is
+ *   `false`
+ * @returns {EncryptStream} An `EncryptStream`, which is a `TransformStream`
+ *   with an added `getAuthTag()` method
  */
 export function createEncryptStream(
   key: Uint8Array,
   iv: Uint8Array,
   {
-    detachAuthTag = false,
     additionalData,
+    detachAuthTag = false,
   }: {
     /**
-     * If true, the authentication tag will not be appended to the ciphertext
+     * If `true`, the authentication tag will not be appended to the ciphertext
      * and must be retrieved with `getAuthTag()` after the stream is complete.
+     * Default is `false`
      */
     detachAuthTag?: boolean;
     /** Optional additional authenticated data */
@@ -103,7 +107,7 @@ export function createEncryptStream(
       },
     });
 
-    // Augment the stream with the getAuthTag method
+    // Augment the stream with the getAuthTag() method
     const encryptStream = stream as EncryptStream;
     encryptStream.getAuthTag = () => {
       if (!detachAuthTag) {
@@ -125,22 +129,37 @@ export function createEncryptStream(
 }
 
 /**
- * Create a native TransformStream that decrypts via the Wasm Decryptor.
+ * Create a native TransformStream that decrypts via a Wasm AES-GCM decryption
+ * implementation.
  *
- * @param key - 32-byte encryption key
- * @param iv - 12-byte iv (recommended)
- * @param detachedAuthTag - Optional detached authentication tag to append to
- *   ciphertext (for Node.js `createCipheriv` compatibility)
- * @param additionalData - Optional additional authenticated data
- *
- *   If an authentication tag is not provided, it is assumed that the authTag is
- *   appended to the ciphertext
+ * @param {Uint8Array} key - 32-byte encryption key
+ * @param {Uint8Array} iv - 12-byte iv (recommended)
+ * @param {Object} options - Optional options
+ * @param {Uint8Array} options.additionalData - Optional additional
+ *   authenticated data
+ * @param {Uint8Array} options.detachedAuthTag - Optional detached
+ *   authentication tag to append to ciphertext, if the ciphertext does not
+ *   already contain an appended authentication tag.
+ * @returns {TransformStream} A `TransformStream` that decrypts the ciphertext
+ *   and verifies the authentication tag.
  */
 export function createDecryptStream(
   key: Uint8Array,
   iv: Uint8Array,
-  detachedAuthTag?: Uint8Array,
-  additionalData?: Uint8Array,
+  {
+    additionalData,
+    detachedAuthTag,
+  }: {
+    /** Optional additional authenticated data */
+    additionalData?: Uint8Array;
+    /**
+     * The detached authentication tag, if the ciphertext does not have it
+     * appended.
+     *
+     * @see {EncryptStream.getAuthTag}
+     */
+    detachedAuthTag?: Uint8Array;
+  } = {},
 ): TransformStream<Uint8Array, Uint8Array> {
   try {
     const dec = new Decryptor(key, iv);
@@ -177,8 +196,8 @@ export function createDecryptStream(
     });
   } catch (error) {
     if (error instanceof Error) {
-      throw new TypeError(`Failed to create encrypt stream:`, { cause: error });
+      throw new TypeError(`Failed to create decrypt stream:`, { cause: error });
     }
-    throw new TypeError(`Failed to create encrypt stream: ${String(error)}`);
+    throw new TypeError(`Failed to create decrypt stream: ${String(error)}`);
   }
 }
