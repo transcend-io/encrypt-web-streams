@@ -114,7 +114,7 @@ for (const fixture of fixtures) {
 
     const endTime = performance.now();
 
-    assert.equal(
+    assert.strictEqual(
       decryptedChecksum,
       fixture.unencryptedChecksum,
       'The decryption stream was successful and passed authentication tag verification, yet our own checksums did not match',
@@ -265,13 +265,12 @@ for (const fixture of fixtures) {
         'No authentication tag found. This should not happen, as the authentication tag is detached from the ciphertext and the encryption stream should be done.',
       );
     }
-    assert.deepEqual(
+    assert.deepStrictEqual(
       authTag,
       decryptionInfo.authTag,
       'The authentication tag did not match the fixture',
     );
-
-    assert.equal(
+    assert.strictEqual(
       encryptedChecksum,
       fixture.encryptedChecksum,
       'The encryption stream was successful and passed authentication tag verification, yet our own checksums did not match',
