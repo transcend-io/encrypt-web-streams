@@ -10,10 +10,8 @@ import { createSHA256 } from 'hash-wasm';
 import prettyMilliseconds from 'pretty-ms';
 import prettyBytes from 'pretty-bytes';
 
-declare function it(
-  name: string,
-  callback: () => Promise<void>,
-): Promise<void> | void;
+declare function it(name: string, callback: () => void): void;
+declare function it(name: string, callback: () => Promise<void>): Promise<void>;
 
 // Constants
 const FIXTURES_SERVER_URL = 'http://127.0.0.1:8142';
@@ -62,7 +60,7 @@ function getDecryptionInfo(fixture: Fixture) {
 
 // Decrypt every fixture
 for (const fixture of fixtures) {
-  await it(`should decrypt ${fixture.filePrefix}, pass authentication tag verification, and match unencrypted file checksum`, async () => {
+  it(`should decrypt ${fixture.filePrefix}, pass authentication tag verification, and match unencrypted file checksum`, async () => {
     const url = new URL(
       fixture.encryptedPathname,
       FIXTURES_SERVER_URL,
@@ -114,14 +112,15 @@ for (const fixture of fixtures) {
       }),
     );
 
+    const endTime = performance.now();
+
     assert.equal(
       decryptedChecksum,
       fixture.unencryptedChecksum,
       'The decryption stream was successful and passed authentication tag verification, yet our own checksums did not match',
     );
 
-    const endTime = performance.now();
-    const timingMs = endTime - startTime;
+    const timingMs = Math.max(endTime - startTime, 1);
     const timingPretty = prettyMilliseconds(timingMs);
     const sizePretty = prettyBytes(fixture.encryptedSize);
     const bitratePretty = prettyBytes(
@@ -133,7 +132,7 @@ for (const fixture of fixtures) {
   });
 }
 
-await it('should fail authentication for malformed auth tag', async () => {
+it('should fail authentication for malformed auth tag', async () => {
   const fixture = fixtures[0];
   if (!fixture) {
     throw new TypeError('No fixture found');
@@ -205,7 +204,7 @@ await it('should fail authentication for malformed auth tag', async () => {
 
 // Encrypt every fixture
 for (const fixture of fixtures) {
-  await it(`should encrypt ${fixture.filePrefix}, get a matching authentication tag, and match encrypted file checksum`, async () => {
+  it(`should encrypt ${fixture.filePrefix}, get a matching authentication tag, and match encrypted file checksum`, async () => {
     const url = new URL(
       fixture.unencryptedPathname,
       FIXTURES_SERVER_URL,
@@ -257,6 +256,8 @@ for (const fixture of fixtures) {
       }),
     );
 
+    const endTime = performance.now();
+
     // Get the authentication tag from the encrypt stream and verify it matches the fixture
     const authTag = encryptStream.getAuthTag();
     if (!authTag) {
@@ -276,8 +277,7 @@ for (const fixture of fixtures) {
       'The encryption stream was successful and passed authentication tag verification, yet our own checksums did not match',
     );
 
-    const endTime = performance.now();
-    const timingMs = endTime - startTime;
+    const timingMs = Math.max(endTime - startTime, 1); // sometimes timing is rounded to 0ms, which results in divide by 0 for bitrate
     const timingPretty = prettyMilliseconds(timingMs);
     const sizePretty = prettyBytes(fixture.unencryptedSize);
     const bitratePretty = prettyBytes(
