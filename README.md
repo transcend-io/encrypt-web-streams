@@ -100,7 +100,7 @@ await readableStream.pipeThrough(encryptStream).pipeTo(writableStream);
 const authTag = encryptStream.getAuthTag();
 ```
 
-Since the authentication tag is not available until the encryption stream is complete, you must call `getAuthTag()` after the stream is complete.
+Since the authentication tag is not available until the encryption stream is complete, you must call `getAuthTag()` after the stream is complete. If you call it before the stream is complete, it will throw an Error. If you call it without having specified `detachAuthTag: true`, it will throw a TypeError.
 
 **Deciphering with a detached authentication tag:**
 

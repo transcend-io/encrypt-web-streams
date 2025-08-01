@@ -29,11 +29,11 @@ export interface EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
    * 1. `options.detachAuthTag` was true when the stream was created.
    * 2. The encryption stream has been fully read.
    *
-   * `getAuthTag()` will throw a TypeError if `options.detachAuthTag` was false.
-   * `getAuthTag()` will return `undefined` if the encryption stream has not
-   * completed.
+   * Otherwise, `getAuthTag()` will throw an error. It throws a TypeError if
+   * `options.detachAuthTag` was false, and an Error if the encryption stream
+   * has not completed.
    */
-  getAuthTag(): Uint8Array | undefined;
+  getAuthTag(): Uint8Array;
 }
 
 /**
@@ -113,7 +113,12 @@ export function createEncryptStream(
       if (!detachAuthTag) {
         throw new TypeError(
           'The authentication tag is not available when `detachAuthTag` is false.' +
-            '\nIt will be appended to the ciphertext.',
+            '\nThe authentication tag will be appended to the ciphertext.',
+        );
+      }
+      if (!authTag) {
+        throw new Error(
+          'The authentication tag is not available until the encryption stream has finished.',
         );
       }
       return authTag;
