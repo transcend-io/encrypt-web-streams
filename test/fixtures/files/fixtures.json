@@ -132,27 +132,25 @@
     "unencryptedChecksum": "bcf57e96be2952e48d689c773bbbf3c73ddcdd34f77351af9c9e209e439b7b66"
   },
   {
-    "url": "/files/encrypted/big.zip.enc",
-    "filePrefix": "big",
-    "mimetype": "application/zip",
-    "size": 827287584,
+    "url": "/files/encrypted/big800MB.dat.enc",
+    "filePrefix": "big800MB",
+    "size": 838860800,
     "decryptionOptions": {
       "key": "vScyqmJKqGl73mJkuwm/zPBQk0wct9eQ5wPE8laGcWM=",
       "iv": "6lNU+2vxJw6SFgse",
-      "authTag": "pzc0I+7lEAtlI+/PimojZw=="
+      "authTag": "z4Hew8QHz7NdXgjsj4HkSQ=="
     },
-    "unencryptedChecksum": "b9528046ceaf6007167fa0569b24a4a9dc14cb70f876667f63c314d166d304b4"
+    "unencryptedChecksum": "993fa9204ce8d91abae9f7c07998e1e845cfb48e8e004d3cc6d7833041a36fd4"
   },
   {
-    "url": "/files/encrypted/big6gb.mov.enc",
-    "filePrefix": "big6gb",
-    "mimetype": "video/quicktime",
-    "size": 6152420792,
+    "url": "/files/encrypted/big6GB.dat.enc",
+    "filePrefix": "big6GB",
+    "size": 6442450944,
     "decryptionOptions": {
       "key": "vScyqmJKqGl73mJkuwm/zPBQk0wct9eQ5wPE8laGcWM=",
       "iv": "6lNU+2vxJw6SFgse",
-      "authTag": "y0IDBWRCFYMKliPOfqx1Mg=="
+      "authTag": "0fgcPUPfBxTE5oOpR98WaA=="
     },
-    "unencryptedChecksum": "0627776e0eaaef80f27ba38935fd8fda0b2b0a4801dafe989d98e9595cbb6bfa"
+    "unencryptedChecksum": "c8495d081f66424b3b673a3ebaa8c5f0e137ea57d04b5d32579262396a53b3f9"
   }
 ]

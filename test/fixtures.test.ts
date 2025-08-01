@@ -10,12 +10,9 @@ declare function it(
 ): Promise<void> | void;
 
 // Constants
-const LOCAL_FIXTURES_BASE_PATHNAME = '/fixtures';
-const REMOTE_FIXTURES_BASE_PATHNAME =
-  'https://fixtures-for-conflux-and-penumbra.s3.us-east-1.amazonaws.com';
+const FIXTURES_SERVER_URL = 'http://127.0.0.1:8142';
 
 // Feature flags
-const FF_LOCAL_MODE = true as boolean;
 const FF_BIG_FIXTURES = 'include' as 'include' | 'skip' | 'only';
 
 // Test fixtures
@@ -27,9 +24,6 @@ const fixtures = fixturesJson.filter((fixture) =>
       ? !fixture.filePrefix.includes('big')
       : fixture.filePrefix.includes('big'),
 ) as Fixture[];
-const fixturesBasePathname = FF_LOCAL_MODE
-  ? LOCAL_FIXTURES_BASE_PATHNAME
-  : REMOTE_FIXTURES_BASE_PATHNAME;
 
 // Initialize WASM
 await init();
@@ -63,7 +57,7 @@ function getDecryptionInfo(fixture: Fixture) {
 // Decrypt every fixture
 for (const fixture of fixtures) {
   await it(`should decrypt ${fixture.filePrefix}, pass authentication tag verification, and match unencrypted file checksum`, async () => {
-    const url = `${fixturesBasePathname}${fixture.url}`;
+    const url = new URL(fixture.url, FIXTURES_SERVER_URL).toString();
 
     // Get encrypted fixture
     const response = await fetch(url);
@@ -109,8 +103,6 @@ for (const fixture of fixtures) {
       }),
     );
 
-    console.log(decryptedChecksum);
-
     assert.equal(
       decryptedChecksum,
       fixture.unencryptedChecksum,
@@ -126,7 +118,7 @@ await it('should fail authentication for malformed auth tag', async () => {
   if (!fixture) {
     throw new TypeError('No fixture found');
   }
-  const url = `${fixturesBasePathname}${fixture.url}`;
+  const url = new URL(fixture.url, FIXTURES_SERVER_URL).toString();
 
   // Get encrypted fixture
   const response = await fetch(url);

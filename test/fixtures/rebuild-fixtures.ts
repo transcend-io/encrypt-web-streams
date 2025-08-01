@@ -7,6 +7,9 @@ import { pipeline } from 'node:stream/promises';
 import mime from 'mime';
 
 import { TEST_ENCRYPTION_IV, TEST_ENCRYPTION_KEY } from './constants.js';
+import { generatePatternFile } from './generate-pattern-file.js';
+
+const thisDirname = path.dirname(new URL(import.meta.url).pathname);
 
 /**
  * A fixture is a remote resource with a checksum of the unencrypted file
@@ -28,23 +31,21 @@ export interface Fixture {
   unencryptedChecksum: string;
 }
 
-const thisDirname = path.dirname(new URL(import.meta.url).pathname);
-
-/**
- * Fixtures which are not local, but hosted at https://fixtures-for-conflux-and-penumbra.s3.us-east-1.amazonaws.com
- */
-const REMOTE_FIXTURES: Fixture[] = [
+/** We can't check these into git, so we generate them here. */
+const bigGeneratedFiles: {
+  filename: `big${number}${'MB' | 'GB'}.dat`;
+  size: number;
+  seed: string;
+}[] = [
   {
-    url: '/files/encrypted/big.zip.enc',
-    filePrefix: 'big',
-    mimetype: 'application/zip',
-    decryptionOptions: {
-      key: 'vScyqmJKqGl73mJkuwm/zPBQk0wct9eQ5wPE8laGcWM=',
-      iv: '6lNU+2vxJw6SFgse',
-      authTag: 'pzc0I+7lEAtlI+/PimojZw==',
-    },
-    unencryptedChecksum:
-      'b9528046ceaf6007167fa0569b24a4a9dc14cb70f876667f63c314d166d304b4',
+    filename: 'big800MB.dat',
+    size: 800 * 1024 * 1024,
+    seed: 'foo',
+  },
+  {
+    filename: 'big6GB.dat',
+    size: 6 * 1024 * 1024 * 1024,
+    seed: 'bar',
   },
 ];
 
@@ -52,6 +53,23 @@ const REMOTE_FIXTURES: Fixture[] = [
  * Rebuild the files.js file to use the local server.
  */
 async function main(): Promise<void> {
+  // Generate the big files that aren't checked into git
+  console.group("Generating big files that aren't checked into git");
+  for (const bigGeneratedFile of bigGeneratedFiles) {
+    const filePath = path.join(
+      thisDirname,
+      '/files/unencrypted',
+      bigGeneratedFile.filename,
+    );
+    await generatePatternFile(
+      filePath,
+      bigGeneratedFile.size,
+      bigGeneratedFile.seed,
+    );
+  }
+  console.groupEnd();
+
+  // Build fixtures
   let fixtures: Fixture[] = [];
   const directory = await readdir(path.join(thisDirname, '/files/unencrypted'));
 
@@ -64,6 +82,9 @@ async function main(): Promise<void> {
     recursive: true,
   });
 
+  console.group(
+    '\nBuilding fixtures by encrypting the files in /files/unencrypted',
+  );
   // Loop through all fixtures
   for (const file of directory) {
     console.debug(`Generating fixture for ${file} ...`);
@@ -118,13 +139,7 @@ async function main(): Promise<void> {
       unencryptedChecksum,
     });
   }
-
-  // Add remote fixtures
-  fixtures.push(
-    ...REMOTE_FIXTURES.filter(
-      (f) => !fixtures.some((f2) => f2.filePrefix === f.filePrefix),
-    ),
-  );
+  console.groupEnd();
 
   // Sort by file size (ascending)
   fixtures = fixtures.sort((a, b) => (a.size ?? 0) - (b.size ?? 0));
@@ -133,7 +148,7 @@ async function main(): Promise<void> {
     path.join(thisDirname, 'files/fixtures.json'),
     JSON.stringify(fixtures, undefined, 2),
   );
-  console.debug('Done!');
+  console.debug('✅ Done!');
 }
 
 await main();
