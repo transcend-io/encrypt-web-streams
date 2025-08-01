@@ -5,24 +5,37 @@ import initWasm, {
 } from '../wasm/aes_gcm_stream_wasm.js';
 
 let _wasmReady: Promise<InitOutput> | undefined;
+/**
+ * Initialize the WASM module.
+ *
+ * @returns A promise that resolves to the WASM module.
+ */
 export function init(): Promise<InitOutput> {
   _wasmReady ??= initWasm();
   return _wasmReady;
 }
 
 class EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
-  private _authTag?: Uint8Array;
+  /** Whether the authentication tag is detached from the ciphertext. */
   private _detachAuthTag: boolean;
+  /** The authentication tag, if it was detached. */
+  private _authTag: Uint8Array | undefined;
 
   /**
-   * The authentication tag, available after the stream has been fully read.
-   * Will be `undefined` if `detachAuthTag` was false in the constructor,
-   * or if the stream has not yet completed.
+   * Get the authentication tag.
+   *
+   * The getAuthTag() method should ONLY be called if:
+   *   1. `detachAuthTag` was true in the constructor.
+   *   2. The encryption stream has been fully read.
+   *
+   * getAuthTag() will throw a TypeError if `detachAuthTag` was false in the constructor.
+   * getAuthTag() will return `undefined` if the encryption stream has not completed.
    */
-  get authTag(): Uint8Array | undefined {
+  public getAuthTag(): Uint8Array | undefined {
     if (!this._detachAuthTag) {
       throw new TypeError(
-        'The authentication tag is not available when `detachAuthTag` is false. It will be appended to the ciphertext.',
+        'The authentication tag is not available when `detachAuthTag` is false.' +
+          '\nIt will be appended to the ciphertext.',
       );
     }
     return this._authTag;
@@ -30,12 +43,9 @@ class EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
 
   private constructor(
     transformer: Transformer<Uint8Array, Uint8Array>,
-    authTagSetter: (authTag: Uint8Array) => void,
     detachAuthTag: boolean,
   ) {
     super(transformer);
-    // @ts-expect-error - we need to set this here
-    this.authTagSetter = authTagSetter;
     this._detachAuthTag = detachAuthTag;
   }
 
@@ -83,13 +93,7 @@ class EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
       },
     };
 
-    stream = new EncryptStream(
-      transformer,
-      (authTag: Uint8Array) => {
-        stream._authTag = authTag;
-      },
-      detachAuthTag,
-    );
+    stream = new EncryptStream(transformer, detachAuthTag);
 
     return stream;
   }
@@ -97,7 +101,6 @@ class EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
 
 /**
  * Create a native TransformStream that encrypts via the WASM Encryptor.
- * This is a convenience wrapper around `EncryptStream.create`.
  */
 export function createEncryptStream(
   key: Uint8Array,

@@ -258,9 +258,11 @@ for (const fixture of fixtures) {
     );
 
     // Get the authentication tag from the encrypt stream and verify it matches the fixture
-    const authTag = encryptStream.authTag;
+    const authTag = encryptStream.getAuthTag();
     if (!authTag) {
-      throw new Error('No authentication tag found');
+      throw new Error(
+        'No authentication tag found. This should not happen, as the authentication tag is detached from the ciphertext and the encryption stream should be done.',
+      );
     }
     assert.deepEqual(
       authTag,
