@@ -28,7 +28,7 @@
     "build:js": "tsc --project tsconfig.json",
     "test:rust": "cd rust && wasm-pack test --node && cargo test",
     "test:js": "web-test-runner --node-resolve --playwright --browsers chromium firefox webkit --files test/**/*.test.ts --files !test/speed.test.ts --files !test/fixtures.test.ts",
-    "test:fixtures": "bash test.sh",
+    "test:fixtures": "bash test-fixtures.sh",
     "rebuild-fixtures": "tsx test/fixtures/rebuild-fixtures.ts",
     "benchmark": "web-test-runner --node-resolve --playwright --browsers chromium firefox webkit --files test/speed.test.ts",
     "clean": "rm -rf wasm/ dist/ rust/target/",
