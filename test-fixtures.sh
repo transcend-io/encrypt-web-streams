@@ -8,15 +8,15 @@ pnpm exec http-server test/fixtures -p 8142 --cors &
 # # Run the tests, and pass additional arguments to the web-test-runner
 pnpm exec web-test-runner --files test/fixtures.test.ts --node-resolve --playwright --browsers chromium firefox webkit "$@"
 
-cleanup() {
-  # Kill whatever is running on port 8142
+stop_server() {
   kill $(lsof -t -i:8142) || true
-  # Add your cleanup commands here
-  exit 0
 }
 
 # On kill, run the cleanup function
+cleanup() {
+  stop_server
+  exit 0
+}
 trap cleanup EXIT
 
-# Run the cleanup function
-cleanup
+stop_server
