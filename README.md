@@ -41,8 +41,8 @@ import {
 #### JS API
 
 - `init(): Promise<InitOutput>` — asynchronously loads the Wasm module (Node.js build auto-initializes)
-- `createEncryptStream(key, iv, additionalData?)` — returns a `TransformStream` encrypting each chunk
-- `createDecryptStream(key, iv, additionalData?)` — returns a `TransformStream` decrypting and verifying each chunk
+- `createEncryptStream(key, iv, options?)` — returns a `TransformStream` that encrypts each chunk
+- `createDecryptStream(key, iv, options?)` — returns a `TransformStream` that decrypts and verifies each chunk
 
 ### Streaming Usage
 
@@ -81,6 +81,35 @@ try {
 } catch (error) {
   console.error(error);
 }
+```
+
+## With a detached authentication tag
+
+Some AES-GCM implementations like WebCrypto's [`encrypt()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt) **append authentication tags to the end of the ciphertext**, while others, like Node.js's [`createCipheriv()`](https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options), **do not append the authentication tag to the ciphertext, instead returning the authentication tag separately**.
+
+This library supports both modes. By default, it appends the authentication tag to the ciphertext during encryption, and expects the authentication tag to be appended to the ciphertext during decryption. If you want to use the library in the latter mode, you can pass `detachAuthTag: true` to `createEncryptStream()`, and `detachedAuthTag` (a `Uint8Array` of the authentication tag) to `createDecryptStream()`.
+
+**Requesting a detached authentication tag:**
+
+```ts
+const encryptStream = createEncryptStream(key, iv, { detachAuthTag: true });
+
+await readableStream.pipeThrough(encryptStream).pipeTo(writableStream);
+
+// Once encryption is complete, get the authentication tag
+const authTag = encryptStream.getAuthTag();
+```
+
+Since the authentication tag is not available until the encryption stream is complete, you must call `getAuthTag()` after the stream is complete.
+
+**Deciphering with a detached authentication tag:**
+
+```ts
+const decryptStream = createDecryptStream(key, iv, {
+  detachedAuthTag: authTag,
+});
+
+await readableStream.pipeThrough(decryptStream).pipeTo(writableStream);
 ```
 
 ## With CryptoKey
