@@ -146,3 +146,25 @@ it('should encrypt and decrypt several chunks of data of varying sizes', async (
     'Decrypted data should match unencrypted data',
   );
 });
+
+it('should throw an error if getAuthTag() is called before the encryption stream is complete', () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
+  const encryptStream = createEncryptStream(key, iv, { detachAuthTag: true });
+
+  assert.throws(
+    () => encryptStream.getAuthTag(),
+    /The authentication tag is not available until the encryption stream has finished./,
+  );
+});
+
+it('should throw a TypeError if getAuthTag() is called without having specified detachAuthTag: true', () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
+  const encryptStream = createEncryptStream(key, iv);
+
+  assert.throws(
+    () => encryptStream.getAuthTag(),
+    /The authentication tag is not available when `detachAuthTag` is false./,
+  );
+});
