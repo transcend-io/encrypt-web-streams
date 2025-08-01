@@ -48,8 +48,10 @@ export function createEncryptStream(
  *
  * @param key - 32-byte encryption key
  * @param nonce - 12-byte nonce (recommended)
+ * @param authTag - Optional authentication tag to append to ciphertext (for Node.js `createCipheriv` compatibility)
  * @param adata - Optional additional authenticated data
- * @param authTag - Optional authentication tag to append to ciphertext (for Node.js compatibility)
+ *
+ * If an authentication tag is not provided, it is assumed that the authTag is appended to the ciphertext
  */
 export function createDecryptStream(
   key: Uint8Array,
@@ -75,7 +77,7 @@ export function createDecryptStream(
     flush(controller) {
       if (hasData) {
         if (authTag) {
-          // Append the auth tag as the final chunk
+          // Append the auth tag as the final chunk (else assume it's appended to the ciphertext)
           const out = dec.update(authTag);
           if (out.length > 0) {
             controller.enqueue(out);
