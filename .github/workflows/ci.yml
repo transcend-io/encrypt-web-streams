@@ -25,6 +25,20 @@ jobs:
       - name: Install pnpm dependencies
         run: pnpm install
 
+      - name: Cache fixtures
+        id: cache-fixtures
+        uses: actions/cache@v4
+        with:
+          path: |
+            test/fixtures/files/encrypted/
+            test/fixtures/files/fixtures.json
+            test/fixtures/files/unencrypted/big*.dat
+          key: ${{ runner.os }}-fixtures-${{ hashFiles('test/fixtures/**/*.ts', 'test/fixtures/files/unencrypted/**/*', '!test/fixtures/files/unencrypted/big*.dat') }}
+
+      - name: Rebuild fixtures
+        if: steps.cache-fixtures.outputs.cache-hit != 'true'
+        run: pnpm run rebuild-fixtures
+
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
@@ -42,10 +56,11 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dist-and-wasm
+          name: dist-and-fixtures
           path: |
             dist/
             wasm/
+            test/fixtures/
 
   test:
     needs: build
@@ -54,12 +69,14 @@ jobs:
         include:
           - test_name: rust
             test_command: pnpm run test:rust:ci
-            needs_fixtures: false
             needs_rust: true
             needs_playwright: false
           - test_name: js
-            test_command: pnpm run test:js:ci && pnpm run test:fixtures:ci
-            needs_fixtures: true
+            test_command: pnpm run test:js:ci
+            needs_rust: false
+            needs_playwright: true
+          - test_name: fixtures
+            test_command: pnpm run test:fixtures:ci
             needs_rust: false
             needs_playwright: true
 
@@ -100,12 +117,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: dist-and-wasm
+          name: dist-and-fixtures
           path: .
-
-      - name: Rebuild fixtures
-        if: ${{ matrix.needs_fixtures }}
-        run: pnpm run rebuild-fixtures
 
       - name: Run tests (${{ matrix.test_name }})
         run: ${{ matrix.test_command }}
