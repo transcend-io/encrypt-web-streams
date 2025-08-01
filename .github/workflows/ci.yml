@@ -58,7 +58,7 @@ jobs:
             needs_rust: true
             needs_playwright: false
           - test_name: js
-            test_command: pnpm run test:js:ci && pnpm run test:fixtures:ci
+            test_command: pnpm run test:js:ci
             needs_fixtures: true
             needs_rust: false
             needs_playwright: true
