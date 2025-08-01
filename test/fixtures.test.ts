@@ -226,7 +226,7 @@ for (const fixture of fixtures) {
     // Encrypt fixture
     const decryptionInfo = getDecryptionInfo(fixture);
 
-    const encryptStream = createEncryptionStream(
+    const encryptionStream = createEncryptionStream(
       decryptionInfo.key,
       decryptionInfo.iv,
       { detachAuthTag: true },
@@ -239,7 +239,7 @@ for (const fixture of fixtures) {
 
     // Stream encrypt the file and compute a checksum (in addition to built-in verification of the authentication tag)
     let encryptedChecksum: string | undefined;
-    await sourceStream.pipeThrough(encryptStream).pipeTo(
+    await sourceStream.pipeThrough(encryptionStream).pipeTo(
       new WritableStream({
         write(chunk) {
           sha256.update(chunk);
@@ -265,7 +265,7 @@ for (const fixture of fixtures) {
     const endTime = performance.now();
 
     // Get the authentication tag from the encrypt stream and verify it matches the fixture
-    const authTag = encryptStream.getAuthTag();
+    const authTag = encryptionStream.getAuthTag();
     assert.deepStrictEqual(
       authTag,
       decryptionInfo.authTag,

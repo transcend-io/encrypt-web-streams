@@ -45,11 +45,11 @@ bench
   .add('aes_gcm_stream_wasm', async () => {
     // Streams
     const readableStream = makeReadableStream();
-    const encryptStream = createEncryptionStream(key, iv);
+    const encryptionStream = createEncryptionStream(key, iv);
     const decryptStream = createDecryptStream(key, iv);
 
     await readableStream
-      .pipeThrough(encryptStream)
+      .pipeThrough(encryptionStream)
       .pipeThrough(decryptStream)
       .pipeTo(new WritableStream());
   })

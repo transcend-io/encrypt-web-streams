@@ -61,7 +61,7 @@ await init();
 const key = crypto.getRandomValues(new Uint8Array(32));
 const iv = crypto.getRandomValues(new Uint8Array(12));
 
-const encryptStream = createEncryptionStream(key, iv);
+const encryptionStream = createEncryptionStream(key, iv);
 const decryptStream = createDecryptStream(key, iv);
 
 try {
@@ -72,7 +72,7 @@ try {
       }
     },
   })
-    .pipeThrough(encryptStream)
+    .pipeThrough(encryptionStream)
     .pipeThrough(decryptStream)
     .pipeTo(
       new WritableStream({
@@ -134,12 +134,14 @@ This library supports both modes. By default, it appends the authentication tag 
 ### Requesting a detached authentication tag from the encryption stream
 
 ```ts
-const encryptStream = createEncryptionStream(key, iv, { detachAuthTag: true });
+const encryptionStream = createEncryptionStream(key, iv, {
+  detachAuthTag: true,
+});
 
-await readableStream.pipeThrough(encryptStream).pipeTo(writableStream);
+await readableStream.pipeThrough(encryptionStream).pipeTo(writableStream);
 
 // Once encryption is complete, get the authentication tag
-const myDetachedAuthTag = encryptStream.getAuthTag();
+const myDetachedAuthTag = encryptionStream.getAuthTag();
 ```
 
 Since the authentication tag is not available until the encryption stream is complete, you must call `getAuthTag()` after the stream is complete. If you call it before the stream is complete, it will throw an Error. If you call it without having specified `detachAuthTag: true`, it will throw a TypeError.
@@ -200,7 +202,7 @@ You should couple your calls to `createEncryptionStream()` to generate a random 
 
 ```ts
 const iv = crypto.getRandomValues(new Uint8Array(12));
-const encryptStream = createEncryptionStream(key, iv);
+const encryptionStream = createEncryptionStream(key, iv);
 ```
 
 ### 2. Unverified Plaintext During Decryption

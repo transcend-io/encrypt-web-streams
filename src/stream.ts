@@ -20,7 +20,8 @@ export function init(): Promise<InitOutput> {
  * A `TransformStream` with an additional method to retrieve the authentication
  * tag.
  */
-export interface EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
+export interface EncryptionStream
+  extends TransformStream<Uint8Array, Uint8Array> {
   /**
    * Get the authentication tag.
    *
@@ -49,8 +50,8 @@ export interface EncryptStream extends TransformStream<Uint8Array, Uint8Array> {
  *   authentication tag will not be appended to the ciphertext and must be
  *   retrieved with `getAuthTag()` after the stream is complete. Default is
  *   `false`
- * @returns {EncryptStream} An `EncryptStream`, which is a `TransformStream`
- *   with an added `getAuthTag()` method
+ * @returns {EncryptionStream} An `EncryptionStream`, which is a
+ *   `TransformStream` with an added `getAuthTag()` method
  */
 export function createEncryptionStream(
   key: Uint8Array,
@@ -68,7 +69,7 @@ export function createEncryptionStream(
     /** Optional additional authenticated data */
     additionalData?: Uint8Array;
   } = {},
-): EncryptStream {
+): EncryptionStream {
   try {
     const enc = new Encryptor(key, iv);
     if (additionalData) enc.init_adata(additionalData);
@@ -108,8 +109,8 @@ export function createEncryptionStream(
     });
 
     // Augment the stream with the getAuthTag() method
-    const encryptStream = stream as EncryptStream;
-    encryptStream.getAuthTag = () => {
+    const encryptionStream = stream as EncryptionStream;
+    encryptionStream.getAuthTag = () => {
       if (!detachAuthTag) {
         throw new TypeError(
           'The authentication tag is not available when `detachAuthTag` is false.' +
@@ -124,7 +125,7 @@ export function createEncryptionStream(
       return detachedAuthTag;
     };
 
-    return encryptStream;
+    return encryptionStream;
   } catch (error) {
     if (error instanceof Error) {
       throw new TypeError(`Failed to create encrypt stream:`, { cause: error });
@@ -171,7 +172,7 @@ export function createDecryptStream(
      * later by calling `setAuthTag()`. The decryption stream will not finalize
      * until it is set.
      *
-     * @see {EncryptStream.getAuthTag}
+     * @see {EncryptionStream.getAuthTag}
      */
     authTag?: Uint8Array | 'defer';
   } = {},
