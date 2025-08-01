@@ -60,7 +60,7 @@ The patch is automatically applied via the `[patch]` section in `rust/Cargo.toml
 
 ```toml
 [patch.crates-io]
-aes-gcm-stream = { path = "../patches/aes-gcm-stream" }
+aes-gcm-stream = { path = "./patches/aes-gcm-stream" }
 ```
 
 This tells Cargo to use our local patched version instead of the one from crates.io.
