@@ -26,7 +26,7 @@ A WebAssembly-powered, truly streaming AES-256-GCM implementation for Node.js an
 Install the published package via npm:
 
 ```bash
-npm install @bencmbrook/aes_gcm_stream
+npm install @transcend-io/encrypt-web-streams
 ```
 
 ## API Reference
@@ -38,7 +38,7 @@ import {
   init,
   createEncryptionStream,
   createDecryptionStream,
-} from '@bencmbrook/aes_gcm_stream';
+} from '@transcend-io/encrypt-web-streams';
 ```
 
 ### JS API
@@ -54,7 +54,7 @@ import {
   init,
   createEncryptionStream,
   createDecryptionStream,
-} from '@bencmbrook/aes_gcm_stream';
+} from '@transcend-io/encrypt-web-streams';
 
 await init();
 
