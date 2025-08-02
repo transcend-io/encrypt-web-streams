@@ -177,7 +177,7 @@ decryptionStream.setAuthTag(myDetachedAuthTag);
 await decryptionPromise;
 ```
 
-If the decryption stream finishes, and an authentication tag has not been set after 10 seconds, a warning will be logged.
+This requires careful handling because the promise will wait indefinitely if the authentication tag is not set. For debugging purposed, if an authentication tag has not been set for more than 10 seconds after the stream has finished decrypting, a warning will be logged.
 
 ---
 
