@@ -5,7 +5,7 @@ import {
   createEncryptionStream,
   init,
 } from '../src/index.js';
-import type { Fixture } from './fixtures/rebuild-fixtures.js';
+import type { Fixture } from './fixtures/types.js';
 import { createSHA256 } from 'hash-wasm';
 import prettyMilliseconds from 'pretty-ms';
 import prettyBytes from 'pretty-bytes';
