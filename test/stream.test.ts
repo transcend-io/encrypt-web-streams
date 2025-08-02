@@ -171,7 +171,7 @@ it('should throw a TypeError if getAuthTag() is called without having specified 
   );
 });
 
-it('should successfully handle a detached auth tag', async () => {
+it('should handle a detached auth tag', async () => {
   const key = new Uint8Array(32).fill(1);
   const iv = new Uint8Array(12).fill(2);
   const unencryptedData = new Uint8Array(1024).fill(1);
@@ -224,6 +224,28 @@ it('should successfully handle a detached auth tag', async () => {
   );
   assert.deepStrictEqual(
     decryptedData2,
+    unencryptedData,
+    'Decrypted data should match unencrypted data',
+  );
+
+  // Decrypt 3: Defer the auth tag for a long time
+  const decryptionStream3 = createDecryptionStream(key, iv, {
+    authTag: 'defer',
+  });
+  const decryptedDataPromise3 = bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(decryptionStream3),
+  );
+  setTimeout(() => {
+    decryptionStream3.setAuthTag(authTag);
+  }, 10_000);
+  const decryptedData3 = await decryptedDataPromise3;
+  assert.strictEqual(
+    decryptedData3.length,
+    unencryptedData.length,
+    'Decrypted data should have same length as unencrypted data',
+  );
+  assert.deepStrictEqual(
+    decryptedData3,
     unencryptedData,
     'Decrypted data should match unencrypted data',
   );

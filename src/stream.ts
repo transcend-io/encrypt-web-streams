@@ -3,6 +3,7 @@ import initWasm, {
   Encryptor,
   type InitOutput,
 } from '../wasm/aes_gcm_stream_wasm.js';
+import { promiseWithResolvers } from './helpers.js';
 
 let _wasmReady: Promise<InitOutput> | undefined;
 
@@ -181,19 +182,31 @@ export function createDecryptionStream(
   try {
     const dec = new Decryptor(key, iv);
     if (additionalData) dec.init_adata(additionalData);
-    if (authTag && authTag !== 'defer' && authTag.length !== 16) {
-      throw new TypeError('The `detachedAuthTag` must be 16 bytes long.');
+
+    // Validate the authTag
+    if (
+      authTag !== undefined &&
+      authTag !== 'defer' &&
+      !(authTag instanceof Uint8Array)
+    ) {
+      throw new TypeError(
+        'The `authTag` must be a Uint8Array, undefined, or "defer".',
+      );
+    }
+    if (authTag instanceof Uint8Array && authTag.length !== 16) {
+      throw new TypeError('The `authTag` must be 16 bytes long.');
     }
 
-    let detachedAuthTagPromise: Promise<Uint8Array> | undefined =
-      authTag === 'defer'
-        ? new Promise<Uint8Array>(() => {
-            // Do not settle the promise. Waiting indefinitely until setAuthTag() is called.
-          })
-        : // eslint-disable-next-line unicorn/no-nested-ternary
-          authTag
-          ? Promise.resolve(authTag)
-          : undefined;
+    const {
+      promise: authTagArgumentPromise,
+      resolve: resolveAuthTagArgument,
+      reject: rejectAuthTagArgument,
+    } = promiseWithResolvers<Uint8Array | undefined>();
+
+    // Resolve the authTag result right away if the auth tag is not deferred.
+    if (authTag !== 'defer') {
+      resolveAuthTagArgument(authTag);
+    }
 
     let hasData = false;
 
@@ -209,23 +222,24 @@ export function createDecryptionStream(
       },
       async flush(controller) {
         if (hasData) {
-          if (detachedAuthTagPromise !== undefined) {
-            const timeout = setTimeout(() => {
-              console.warn(
-                'The decryption stream finished 10 seconds ago, but the authentication tag has still not been set.',
-              );
-            }, 10_000);
-            // Wait for the auth tag to be set
-            const detachedAuthTag = await detachedAuthTagPromise;
-            clearTimeout(timeout);
+          // Wait for the auth tag to be set, if not already
+          const timeout = setTimeout(() => {
+            console.warn(
+              'The decryption stream finished 10 seconds ago, but the authentication tag has still not been set.',
+            );
+          }, 10_000);
+          const authTagArgument = await authTagArgumentPromise;
+          clearTimeout(timeout);
 
+          if (authTagArgument !== undefined) {
             // Append the auth tag as the final chunk (else assume it's already appended to the ciphertext)
-            const out = dec.update(detachedAuthTag);
+            const out = dec.update(authTagArgument);
             if (out.length > 0) {
               controller.enqueue(out);
             }
           }
-          // might throw on auth failure
+
+          // Note: `finalize()` throws on auth failure
           const last = dec.finalize();
           if (last.length > 0) {
             controller.enqueue(last);
@@ -236,11 +250,18 @@ export function createDecryptionStream(
 
     const decryptionStream = stream as DecryptionStream;
     decryptionStream.setAuthTag = (authTag: Uint8Array) => {
-      if (authTag.length !== 16) {
-        throw new TypeError('The `authTag` must be 16 bytes long.');
+      if (!(authTag instanceof Uint8Array) || authTag.length !== 16) {
+        rejectAuthTagArgument(
+          new TypeError(
+            'The `authTag` must be a Uint8Array and 16 bytes long.',
+          ),
+        );
+        throw new TypeError(
+          'The `authTag` must be a Uint8Array and 16 bytes long.',
+        );
       }
       // Resolve the promise for the detached authentication tag, allowing the decipher to finalize.
-      detachedAuthTagPromise = Promise.resolve(authTag);
+      resolveAuthTagArgument(authTag);
     };
 
     return decryptionStream;
