@@ -129,7 +129,7 @@ const decryptionStream = createDecryptionStream(
 
 Some AES-GCM implementations like WebCrypto's [`encrypt()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt) **append authentication tags to the end of the ciphertext**, while others, like Node.js's [`createCipheriv()`](https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options), **do not append the authentication tag to the ciphertext, instead returning the authentication tag separately**.
 
-This library supports both modes. By default, it appends the authentication tag to the ciphertext during encryption, and expects the authentication tag to be appended to the ciphertext during decryption. If you want to use the library in the latter mode, you can pass `detachAuthTag: true` to `createEncryptionStream()`, and `authTag` (a `Uint8Array` of the authentication tag) to `createDecryptionStream()`. The `authTag` must be 16 bytes long.
+This library supports both modes. By default, it appends the authentication tag to the ciphertext during encryption, and expects the authentication tag to be appended to the ciphertext during decryption. If you want to use the library in the latter mode, you can pass `detachAuthTag: true` to `createEncryptionStream()`, and `authTag` (a `Uint8Array`) to `createDecryptionStream()`. The `authTag` must be 16 bytes long.
 
 ### Requesting a detached authentication tag from the encryption stream
 
@@ -141,7 +141,7 @@ const encryptionStream = createEncryptionStream(key, iv, {
 await readableStream.pipeThrough(encryptionStream).pipeTo(writableStream);
 
 // Once encryption is complete, get the authentication tag
-const myDetachedAuthTag = encryptionStream.getAuthTag();
+const myDetachedAuthTag: Uint8Array = encryptionStream.getAuthTag();
 ```
 
 Since the authentication tag is not available until the encryption stream is complete, you must call `getAuthTag()` after the stream is complete. If you call it before the stream is complete, it will throw an Error. If you call it without having specified `detachAuthTag: true`, it will throw a TypeError.
@@ -173,11 +173,11 @@ const decryptionPromise = readableStream
 // Set the authentication tag after the decryption stream has started
 decryptionStream.setAuthTag(myDetachedAuthTag);
 
-// Await the decryption stream
+// Finish the decryption stream
 await decryptionPromise;
 ```
 
-If the decipher stream finishes, and an authentication tag has not been set after 10 seconds, a warning will be logged.
+If the decryption stream finishes, and an authentication tag has not been set after 10 seconds, a warning will be logged.
 
 ---
 
@@ -223,16 +223,14 @@ Run `pnpm benchmark` to see the speed of the implementation and compare it again
 
 ## Supporting Large Files
 
-First, you should avoid buffering data in memory in your implementation, meaning: (A) don't push chunks onto an array, and (B) don't call `new Blob(decryptionStream)`. You should stream the data end-to-end.
+First, you should avoid buffering data in memory in your implementation. For example, don't push chunks onto an array. You should stream the data end-to-end.
 
-Second, there are volumes of data for which counting the volume of data itself becomes a problem. In JavaScript, counting bits will overflow at a 1.13 PB file.
+Second, there are volumes of data for which counting the volume of data itself becomes a problem. In JavaScript, counting bits will overflow at a 1.13 PB file. In Wasm, it's a bit more complicated. The Rust crate, `aes-gcm-stream`, originally used `usize` bit counters, which in Wasm is `u32`, and thus the bit counter overflowed at 536 MB. This repo patches that crate to use `u64` for the counter, meaning the theoretical maximum file size is 2^64 bytes, or 16 EB. Using this in Wasm requires similar attention to any counters you implement.
 
-In Wasm, it's a bit more complicated. The Rust crate, `aes-gcm-stream`, originally used `usize` bit counters, which in Wasm is `u32`, and thus the bit counter overflowed at 536 MB. This repo patches that crate to use `u64` for the counter, meaning the theoretical maximum file size is 2^64 bytes, or 16 EB. Using this in Wasm requires similar attention to any counters you implement.
-
-However, some browsers may have built-in counters which will fail when streaming large amounts of data:
+Some browsers may also have built-in counters which will fail when streaming large amounts of data:
 
 - Chromium (i.e., Chrome): unlimited data (fast; 60 MB/s)
-- Webkit (i.e., Safari): OOM error at files > ~3 GB (fast; 60 MB/s)
+- Webkit (i.e., Safari): OOM error at files > ~3 GB (fast; 60 MB/s) [bug](https://github.com/transcend-io/encrypt-web-streams/issues/1)
 - Firefox: unlimited data (slow; 4 MB/s)
 
 In general, staying under 3 GB per stream is the safest guarantee for wide browser support.
