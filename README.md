@@ -1,6 +1,6 @@
-# aes_gcm_stream
+# Encrypt Web Streams
 
-A WebAssembly-powered, truly streaming AES-256-GCM implementation for Node.js and the web. This library wraps the Rust [`aes-gcm-stream`](https://lib.rs/crates/aes-gcm-stream) crate and provides both direct Wasm bindings and a streaming API.
+A WebAssembly-powered, truly streaming AES-256-GCM implementation for Node.js and the web. This library wraps the Rust [`aes-gcm-stream`](https://lib.rs/crates/aes-gcm-stream) crate and provides a TransformStream API.
 
 ## Features
 
