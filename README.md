@@ -88,7 +88,7 @@ try {
 
 ## With CryptoKey
 
-Since this is not WebCrypto, accepting a [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey) directly is not in scope of this library. However, you can derive a `Uint8Array` key from your `CryptoKey`, provided it's [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable):
+Since this is not using WebCrypto, accepting a [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey) directly is not in scope of this library. However, you can derive a `Uint8Array` key from your `CryptoKey`, provided it's [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable):
 
 ```ts
 // Export the CryptoKey as a Uint8Array, after validating it for its intended use
@@ -127,7 +127,7 @@ const decryptionStream = createDecryptionStream(
 
 ## With detached authentication tags
 
-Some AES-GCM implementations like WebCrypto's [`encrypt()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt) **append authentication tags to the end of the ciphertext**, while others, like Node.js's [`createCipheriv()`](https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options), **do not append the authentication tag to the ciphertext, instead returning the authentication tag separately**.
+Some AES-GCM implementations like WebCrypto's [`encrypt()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt) **append the authentication tag to the end of the ciphertext**, while others, like Node.js's [`createCipheriv()`](https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options), **do not append the authentication tag to the ciphertext, instead returning the authentication tag separately**.
 
 This library supports both modes. By default, it appends the authentication tag to the ciphertext during encryption, and expects the authentication tag to be appended to the ciphertext during decryption. If you want to use the library in the latter mode, you can pass `detachAuthTag: true` to `createEncryptionStream()`, and `authTag` (a `Uint8Array`) to `createDecryptionStream()`. The `authTag` must be 16 bytes long.
 
@@ -177,7 +177,7 @@ decryptionStream.setAuthTag(myDetachedAuthTag);
 await decryptionPromise;
 ```
 
-This requires careful handling because the promise will wait indefinitely if the authentication tag is not set. For debugging purposed, if an authentication tag has not been set for more than 10 seconds after the stream has finished decrypting, a warning will be logged.
+This requires careful handling because the promise will wait indefinitely if the authentication tag is not set. For debugging purposes, if an authentication tag has not been set for more than 10 seconds after the stream has finished decrypting, a warning will be logged.
 
 ---
 
