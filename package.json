@@ -41,7 +41,7 @@
     "lint:types": "tsc --noEmit",
     "lint:types:tests": "tsc --noEmit --project test/tsconfig.json",
     "lint:types:fixtures": "tsc --noEmit --project test/fixtures/tsconfig.json",
-    "format": "prettier --write ."
+    "format": "pnpm dlx -- doctoc README.md --maxlevel 2 &&prettier --write ."
   },
   "dependencies": {},
   "devDependencies": {

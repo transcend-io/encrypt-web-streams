@@ -11,13 +11,18 @@ A WebAssembly-powered, truly streaming AES-256-GCM implementation for Node.js an
 
 ## Table of Contents
 
-1. [Installation](#installation)
-2. [API Reference](#api-reference)
-3. [Usage Examples](#usage-examples)
-4. [Security](#security)
-5. [Performance](#performance)
-6. [Supporting Large Files](#supporting-large-files)
-7. [Contributing](#contributing)
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Installation](#installation)
+- [API Reference](#api-reference)
+- [Usage](#usage)
+- [Security](#security)
+- [Performance](#performance)
+- [Supporting Large Files](#supporting-large-files)
+- [Contributing](#contributing)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ---
 
@@ -47,7 +52,9 @@ import {
 - `createEncryptionStream(key, iv, options?)` — returns a `TransformStream` that encrypts a stream of plaintext data.
 - `createDecryptionStream(key, iv, options?)` — returns a `TransformStream` that decrypts a stream of encrypted data.
 
-## Streaming Usage
+## Usage
+
+### Streaming Usage
 
 ```js
 import {
@@ -86,7 +93,7 @@ try {
 }
 ```
 
-## With CryptoKey
+### With CryptoKey
 
 Since this is not using WebCrypto, accepting a [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey) directly is not in scope of this library. However, you can derive a `Uint8Array` key from your `CryptoKey`, provided it's [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable):
 
@@ -125,7 +132,7 @@ const decryptionStream = createDecryptionStream(
 );
 ```
 
-## With Web Workers
+### With Web Workers
 
 For CPU-intensive tasks like encryption or decryption, it's best to use a Web Worker. This moves the heavy computation off the main thread, preventing your application's UI from freezing and ensuring a smooth user experience.
 
@@ -214,13 +221,13 @@ The library works out-of-the-box in workers. The following example shows how to 
    console.log('Finished reading encrypted stream on main thread.');
    ```
 
-## With detached authentication tags
+### With detached authentication tags
 
 Some AES-GCM implementations like WebCrypto's [`encrypt()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt) **append the authentication tag to the end of the ciphertext**, while others, like Node.js's [`createCipheriv()`](https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options), **do not append the authentication tag to the ciphertext, instead returning the authentication tag separately**.
 
 This library supports both modes. By default, it appends the authentication tag to the ciphertext during encryption, and expects the authentication tag to be appended to the ciphertext during decryption. If you want to use the library in the latter mode, you can pass `detachAuthTag: true` to `createEncryptionStream()`, and `authTag` (a `Uint8Array`) to `createDecryptionStream()`. The `authTag` must be 16 bytes long.
 
-### Requesting a detached authentication tag from the encryption stream
+#### Requesting a detached authentication tag from the encryption stream
 
 ```ts
 const encryptionStream = createEncryptionStream(key, iv, {
@@ -235,7 +242,7 @@ const myDetachedAuthTag: Uint8Array = encryptionStream.getAuthTag();
 
 Since the authentication tag is not available until the encryption stream is complete, you must call `getAuthTag()` after the stream is complete. If you call it before the stream is complete, it will throw an Error. If you call it without having specified `detachAuthTag: true`, it will throw a TypeError.
 
-### Decrypting with a detached authentication tag
+#### Decrypting with a detached authentication tag
 
 ```ts
 const decryptionStream = createDecryptionStream(key, iv, {
@@ -245,7 +252,7 @@ const decryptionStream = createDecryptionStream(key, iv, {
 await readableStream.pipeThrough(decryptionStream).pipeTo(writableStream);
 ```
 
-### Advanced: Defer setting the detached authentication tag while decrypting
+#### Advanced: Defer setting the detached authentication tag while decrypting
 
 In advanced use cases, you may want to defer setting the authentication tag until after the decryption stream has started. This is useful if you want to set the authentication tag after the decryption stream has started, but before the stream is complete. **The decryption stream will not finalize until the authentication tag is set.**
 
