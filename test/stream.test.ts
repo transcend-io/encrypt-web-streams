@@ -9,11 +9,32 @@ declare function it(name: string, callback: () => void): void;
 declare function it(name: string, callback: () => Promise<void>): Promise<void>;
 
 async function bufferEntireStream(
-  readableStream: ReadableStream,
+  readableStream: ReadableStream<Uint8Array>,
 ): Promise<Uint8Array> {
-  const response = new Response(readableStream);
-  const arrayBuffer = await response.arrayBuffer();
-  return new Uint8Array(arrayBuffer);
+  const reader = readableStream.getReader();
+  const chunks = [];
+  let totalLength = 0;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      chunks.push(value);
+      totalLength += value.length;
+    }
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return result;
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 function createReadableStream(data: Uint8Array): ReadableStream<Uint8Array> {
@@ -457,4 +478,92 @@ it('should throw an error if setAuthTag() is called after the stream is finished
   assert.throws(() => {
     decryptionStream.setAuthTag(authTag);
   }, /The decryption stream has already finished/);
+});
+
+it('should encrypt and decrypt with additionalData', async () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
+  const unencryptedData = new Uint8Array(1024).fill(3);
+  const additionalData = new Uint8Array(32).fill(4);
+
+  const encryptedData = await bufferEntireStream(
+    createReadableStream(unencryptedData).pipeThrough(
+      createEncryptionStream(key, iv, { additionalData }),
+    ),
+  );
+
+  const decryptedData = await bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(
+      createDecryptionStream(key, iv, { additionalData }),
+    ),
+  );
+
+  assert.deepStrictEqual(
+    decryptedData,
+    unencryptedData,
+    'Decrypted data should match unencrypted data',
+  );
+});
+
+it('should fail decryption if additionalData is missing', async () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
+  const unencryptedData = new Uint8Array(1024).fill(3);
+  const additionalData = new Uint8Array(32).fill(4);
+
+  const encryptedData = await bufferEntireStream(
+    createReadableStream(unencryptedData).pipeThrough(
+      createEncryptionStream(key, iv, { additionalData }),
+    ),
+  );
+
+  const decryptionPromise = bufferEntireStream(
+    createReadableStream(encryptedData)
+      // No additionalData here
+      .pipeThrough(createDecryptionStream(key, iv)),
+  );
+
+  try {
+    await decryptionPromise;
+    assert.fail('Decryption should have failed');
+  } catch (error) {
+    assert.instanceOf(error, Error, 'Error should be an Error instance');
+    assert.match(
+      error.message,
+      /Failed to finalize decryption stream/,
+      'Error message should indicate finalization failure',
+    );
+  }
+});
+
+it('should fail decryption if additionalData is different', async () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
+  const unencryptedData = new Uint8Array(1024).fill(3);
+  const additionalData = new Uint8Array(32).fill(4);
+  const wrongAdditionalData = new Uint8Array(32).fill(5);
+
+  const encryptedData = await bufferEntireStream(
+    createReadableStream(unencryptedData).pipeThrough(
+      createEncryptionStream(key, iv, { additionalData }),
+    ),
+  );
+
+  const decryptionPromise = bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(
+      createDecryptionStream(key, iv, { additionalData: wrongAdditionalData }),
+    ),
+  );
+
+  try {
+    await decryptionPromise;
+    assert.fail('Decryption should have failed');
+  } catch (error) {
+    assert.instanceOf(error, Error, 'Error should be an Error instance');
+    assert.match(
+      error.message,
+      /Failed to finalize decryption stream/,
+      'Error message should indicate finalization failure',
+    );
+  }
 });

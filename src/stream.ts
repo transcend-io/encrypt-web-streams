@@ -254,9 +254,22 @@ export function createDecryptionStream(
           }
 
           // Note: `finalize()` throws on failure of the authentication tag
-          const last = dec.finalize();
-          if (last.length > 0) {
-            controller.enqueue(last);
+          try {
+            const last = dec.finalize();
+            if (last.length > 0) {
+              controller.enqueue(last);
+            }
+          } catch (error) {
+            if (error instanceof Error) {
+              // eslint-disable-next-line unicorn/prefer-type-error
+              throw new Error(
+                `Failed to finalize decryption stream: ${error.message}`,
+                { cause: error },
+              );
+            }
+            throw new Error(
+              `Failed to finalize decryption stream: ${String(error)}`,
+            );
           }
         } finally {
           // If the stream is aborted, clear the timeout
