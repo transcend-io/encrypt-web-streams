@@ -5,9 +5,6 @@ import {
   init,
 } from '../src/index.js';
 
-declare function it(name: string, callback: () => void): void;
-declare function it(name: string, callback: () => Promise<void>): Promise<void>;
-
 async function bufferEntireStream(
   readableStream: ReadableStream<Uint8Array>,
 ): Promise<Uint8Array> {

@@ -1,9 +1,6 @@
 import { assert } from '@esm-bundle/chai';
 import initWasm, { Decryptor, Encryptor } from '../wasm/aes_gcm_stream_wasm.js';
 
-declare function it(name: string, callback: () => void): void;
-declare function it(name: string, callback: () => Promise<void>): Promise<void>;
-
 it('should initialize Wasm module', async () => {
   const wasm = await initWasm();
   assert.ok(wasm, 'Wasm module should be initialized');

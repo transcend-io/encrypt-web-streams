@@ -22,7 +22,7 @@ const eslintConfig = tseslint.config(
     },
   },
   {
-    ignores: ['dist', 'wasm', 'rust', 'hidden'],
+    ignores: ['dist', 'wasm', 'rust', 'hidden', 'coverage'],
   },
 );
 

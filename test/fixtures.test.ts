@@ -10,8 +10,6 @@ import { createSHA256 } from 'hash-wasm';
 import prettyMilliseconds from 'pretty-ms';
 import prettyBytes from 'pretty-bytes';
 
-declare function it(name: string, callback: () => void): void;
-declare function it(name: string, callback: () => Promise<void>): Promise<void>;
 declare global {
   var environment: Record<string, string>;
 }
