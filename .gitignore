@@ -8,6 +8,10 @@ node_modules/
 dist/
 .tsbuildinfo
 
+# WebAssembly
+wasm/*.wasm
+wasm/*.wat
+
 # For scratch work / misc development
 hidden/
 
