@@ -1,12 +1,12 @@
 # Encrypt Web Streams
 
-A WebAssembly-powered, truly streaming AES-256-GCM implementation for Node.js and the web. This library wraps the Rust [`aes-gcm-stream`](https://lib.rs/crates/aes-gcm-stream) crate and provides a TransformStream API.
+A WebAssembly-powered, truly streaming AES-256-GCM implementation for the modern web. This library wraps the Rust [`aes-gcm-stream`](https://lib.rs/crates/aes-gcm-stream) crate and provides a TransformStream API.
 
 ## Features
 
 - **True streaming**: Encrypt/decrypt chunk-by-chunk without buffering the entire payload in JavaScript.
 - **High performance**: Leverages Rust's optimized AES-GCM implementation via WebAssembly.
-- **Node.js and Web support**: Works in both Node.js and browser environments.
+- **Web native**: Works in browser environments with zero dependencies.
 - **One-shot or streaming**: Use in single-call mode or stream mode depending on your needs.
 
 ## Table of Contents
@@ -46,7 +46,7 @@ import {
 
 ### JS API
 
-- `init(): Promise<InitOutput>` — asynchronously loads the Wasm module (Node.js build auto-initializes)
+- `init(): Promise<InitOutput>` — asynchronously loads the Wasm module
 - `createEncryptionStream(key, iv, options?)` — returns a `TransformStream` that encrypts a stream of plaintext data.
 - `createDecryptionStream(key, iv, options?)` — returns a `TransformStream` that decrypts a stream of encrypted data.
 
@@ -327,7 +327,7 @@ Some browsers have built-in counters which will fail when streaming large amount
 
 ## Contributing
 
-This project uses Rust for the WebAssembly module and TypeScript for the JavaScript/Node.js wrapper.
+This project uses Rust for the WebAssembly module and TypeScript for the JavaScript wrapper.
 
 ### Prerequisites
 
