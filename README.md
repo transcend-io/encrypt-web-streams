@@ -24,7 +24,11 @@ await response.body
 
 - [Installation](#installation)
 - [API Reference](#api-reference)
-- [Usage](#usage)
+- [Streaming](#streaming)
+- [With Web Workers](#with-web-workers)
+- [Streaming to disk](#streaming-to-disk)
+- [With CryptoKeys](#with-cryptokeys)
+- [With detached authentication tags](#with-detached-authentication-tags)
 - [Security](#security)
 - [Performance](#performance)
 - [Supporting Large Files](#supporting-large-files)
@@ -52,15 +56,11 @@ import {
 } from '@transcend-io/encrypt-web-streams';
 ```
 
-### JS API
+- `init(): Promise` — asynchronously loads the Wasm module
+- `createEncryptionStream(key: Uint8Array, iv: Uint8Array, options?)` — returns a `TransformStream<Uint8Array, Uint8Array>` that encrypts a stream of plaintext data.
+- `createDecryptionStream(key: Uint8Array, iv: Uint8Array, options?)` — returns a `TransformStream<Uint8Array, Uint8Array>` that decrypts a stream of encrypted data.
 
-- `init(): Promise<InitOutput>` — asynchronously loads the Wasm module
-- `createEncryptionStream(key, iv, options?)` — returns a `TransformStream` that encrypts a stream of plaintext data.
-- `createDecryptionStream(key, iv, options?)` — returns a `TransformStream` that decrypts a stream of encrypted data.
-
-## Usage
-
-### Streaming Usage
+## Streaming
 
 ```js
 import {
@@ -99,46 +99,7 @@ try {
 }
 ```
 
-### With CryptoKey
-
-Since this is not using WebCrypto, accepting a [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey) directly is not in scope of this library. However, you can derive a `Uint8Array` key from your `CryptoKey`, provided it's [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable):
-
-```ts
-// Export the CryptoKey as a Uint8Array, after validating it for its intended use
-async function getAesKey(
-  key: CryptoKey,
-  operation: 'encrypt' | 'decrypt',
-): Promise<Uint8Array> {
-  const errors: string[] = [];
-  if (key.algorithm.name !== 'AES-GCM') {
-    errors.push('Key is not an AES-GCM key');
-  }
-  if ((key.algorithm as AesKeyAlgorithm).length !== 256) {
-    errors.push('Key is not a 256-bit key');
-  }
-  if (!key.usages.includes(operation)) {
-    errors.push(`Key is not used for the requested operation: ${operation}`);
-  }
-  if (!key.extractable) {
-    errors.push('Key is not extractable');
-  }
-  if (errors.length > 0) {
-    throw new TypeError(
-      `The provided CryptoKey is not appropriate for the requested operation:\n - ${errors.join('\n - ')}`,
-    );
-  }
-
-  return new Uint8Array(await crypto.subtle.exportKey('raw', key));
-}
-
-// Usage example
-const decryptionStream = createDecryptionStream(
-  await getAesKey(myCryptoKey, 'decrypt'),
-  iv,
-);
-```
-
-### With Web Workers
+## With Web Workers
 
 For CPU-intensive tasks like encryption or decryption, it's best to use a Web Worker. This moves the heavy computation off the main thread, preventing your application's UI from freezing and ensuring a smooth user experience.
 
@@ -226,61 +187,7 @@ while (true) {
 console.log('Finished reading encrypted stream on main thread.');
 ```
 
-### With detached authentication tags
-
-Some AES-GCM implementations like WebCrypto's [`encrypt()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt) **append the authentication tag to the end of the ciphertext**, while others, like Node.js's [`createCipheriv()`](https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options), **do not append the authentication tag to the ciphertext, instead returning the authentication tag separately**.
-
-This library supports both modes. By default, it appends the authentication tag to the ciphertext during encryption, and expects the authentication tag to be appended to the ciphertext during decryption. If you want to use the library in the latter mode, you can pass `detachAuthTag: true` to `createEncryptionStream()`, and `authTag` (a `Uint8Array`) to `createDecryptionStream()`. The `authTag` must be 16 bytes long.
-
-#### Requesting a detached authentication tag from the encryption stream
-
-```ts
-const encryptionStream = createEncryptionStream(key, iv, {
-  detachAuthTag: true,
-});
-
-await readableStream.pipeThrough(encryptionStream).pipeTo(writableStream);
-
-// Once encryption is complete, get the authentication tag
-const myDetachedAuthTag: Uint8Array = encryptionStream.getAuthTag();
-```
-
-Since the authentication tag is not available until the encryption stream is complete, you must call `getAuthTag()` after the stream is complete. If you call it before the stream is complete, it will throw an Error. If you call it without having specified `detachAuthTag: true`, it will throw a TypeError.
-
-#### Decrypting with a detached authentication tag
-
-```ts
-const decryptionStream = createDecryptionStream(key, iv, {
-  authTag: myDetachedAuthTag, // Uint8Array
-});
-
-await readableStream.pipeThrough(decryptionStream).pipeTo(writableStream);
-```
-
-#### Advanced: Defer setting the detached authentication tag while decrypting
-
-In advanced use cases, you may want to defer setting the authentication tag until after the decryption stream has started. This is useful if you want to set the authentication tag after the decryption stream has started, but before the stream is complete. **The decryption stream will not finalize until the authentication tag is set.**
-
-```ts
-const decryptionStream = createDecryptionStream(key, iv, {
-  authTag: 'defer',
-});
-
-// Start the decryption stream, but do not await the promise, since it cannot resolve until the authentication tag is set.
-const decryptionPromise = readableStream
-  .pipeThrough(decryptionStream)
-  .pipeTo(writableStream);
-
-// Set the authentication tag after the decryption stream has started
-decryptionStream.setAuthTag(myDetachedAuthTag);
-
-// Finish the decryption stream
-await decryptionPromise;
-```
-
-This requires careful handling because the promise will wait indefinitely if the authentication tag is not set. For debugging purposes, if an authentication tag has not been set for more than 10 seconds after the stream has finished decrypting, a warning will be logged.
-
-### Saving to Disk
+## Streaming to disk
 
 Use [`FileSystemWritableFileStream`](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream) to write to disk.
 
@@ -302,7 +209,98 @@ button.addEventListener('click', async () => {
 });
 ```
 
----
+## With CryptoKeys
+
+Since this is not using WebCrypto, accepting a [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey) directly is not in scope of this library. However, you can derive a `Uint8Array` key from your `CryptoKey`, provided it's [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable):
+
+```ts
+// Export the CryptoKey as a Uint8Array, after validating it for its intended use
+async function getAesKey(
+  key: CryptoKey,
+  operation: 'encrypt' | 'decrypt',
+): Promise<Uint8Array> {
+  const errors: string[] = [];
+  if (key.algorithm.name !== 'AES-GCM') {
+    errors.push('Key is not an AES-GCM key');
+  }
+  if ((key.algorithm as AesKeyAlgorithm).length !== 256) {
+    errors.push('Key is not a 256-bit key');
+  }
+  if (!key.usages.includes(operation)) {
+    errors.push(`Key is not used for the requested operation: ${operation}`);
+  }
+  if (!key.extractable) {
+    errors.push('Key is not extractable');
+  }
+  if (errors.length > 0) {
+    throw new TypeError(
+      `The provided CryptoKey is not appropriate for the requested operation:\n - ${errors.join('\n - ')}`,
+    );
+  }
+
+  return new Uint8Array(await crypto.subtle.exportKey('raw', key));
+}
+
+// Usage example
+const decryptionStream = createDecryptionStream(
+  await getAesKey(myCryptoKey, 'decrypt'),
+  iv,
+);
+```
+
+## With detached authentication tags
+
+Some AES-GCM implementations like WebCrypto's [`encrypt()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt) **append the authentication tag to the end of the ciphertext**, while others, like Node.js's [`createCipheriv()`](https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options), **do not append the authentication tag to the ciphertext, instead returning the authentication tag separately**.
+
+This library supports both modes. By default, it appends the authentication tag to the ciphertext during encryption, and expects the authentication tag to be appended to the ciphertext during decryption. If you want to use the library in the latter mode, you can pass `detachAuthTag: true` to `createEncryptionStream()`, and `authTag` (a `Uint8Array`) to `createDecryptionStream()`. The `authTag` must be 16 bytes long.
+
+### Requesting a detached authentication tag from the encryption stream
+
+```ts
+const encryptionStream = createEncryptionStream(key, iv, {
+  detachAuthTag: true,
+});
+
+await readableStream.pipeThrough(encryptionStream).pipeTo(writableStream);
+
+// Once encryption is complete, get the authentication tag
+const myDetachedAuthTag: Uint8Array = encryptionStream.getAuthTag();
+```
+
+Since the authentication tag is not available until the encryption stream is complete, you must call `getAuthTag()` after the stream is complete. If you call it before the stream is complete, it will throw an Error. If you call it without having specified `detachAuthTag: true`, it will throw a TypeError.
+
+### Decrypting with a detached authentication tag
+
+```ts
+const decryptionStream = createDecryptionStream(key, iv, {
+  authTag: myDetachedAuthTag, // Uint8Array
+});
+
+await readableStream.pipeThrough(decryptionStream).pipeTo(writableStream);
+```
+
+### Advanced: Defer setting the detached authentication tag while decrypting
+
+In advanced use cases, you may want to defer setting the authentication tag until after the decryption stream has started. This is useful if you want to set the authentication tag after the decryption stream has started, but before the stream is complete. **The decryption stream will not finalize until the authentication tag is set.**
+
+```ts
+const decryptionStream = createDecryptionStream(key, iv, {
+  authTag: 'defer',
+});
+
+// Start the decryption stream, but do not await the promise, since it cannot resolve until the authentication tag is set.
+const decryptionPromise = readableStream
+  .pipeThrough(decryptionStream)
+  .pipeTo(writableStream);
+
+// Set the authentication tag after the decryption stream has started
+decryptionStream.setAuthTag(myDetachedAuthTag);
+
+// Finish the decryption stream
+await decryptionPromise;
+```
+
+This requires careful handling because the promise will wait indefinitely if the authentication tag is not set. For debugging purposes, if an authentication tag has not been set for more than 10 seconds after the stream has finished decrypting, a warning will be logged.
 
 ## Security
 
