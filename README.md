@@ -24,8 +24,6 @@ A WebAssembly-powered, truly streaming AES-256-GCM implementation for Node.js an
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
----
-
 ## Installation
 
 Install the published package via npm:
