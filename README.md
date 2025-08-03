@@ -2,6 +2,14 @@
 
 A WebAssembly-powered, truly streaming AES-256-GCM implementation for the modern web. This library wraps the Rust [`aes-gcm-stream`](https://lib.rs/crates/aes-gcm-stream) crate and provides a TransformStream API.
 
+```ts
+const response = await fetch('/big-encrypted-file');
+
+await response.body
+  .pipeThrough(createDecryptionStream(key, iv))
+  .pipeTo(fileSystemWritableStream);
+```
+
 ## Features
 
 - **True streaming**: Encrypt/decrypt chunk-by-chunk without buffering the entire payload in JavaScript.
