@@ -205,5 +205,19 @@
     },
     "unencryptedChecksum": "993fa9204ce8d91abae9f7c07998e1e845cfb48e8e004d3cc6d7833041a36fd4",
     "encryptedChecksum": "6a75335bfd73523fb430190a83256b470800fc7a74b6049976120c478e993854"
+  },
+  {
+    "filePrefix": "big6GB",
+    "encryptedPathname": "/files/encrypted/big6GB.dat.enc",
+    "unencryptedPathname": "/files/unencrypted/big6GB.dat",
+    "encryptedSize": 6442450944,
+    "unencryptedSize": 6442450944,
+    "decryptionOptions": {
+      "key": "vScyqmJKqGl73mJkuwm/zPBQk0wct9eQ5wPE8laGcWM=",
+      "iv": "6lNU+2vxJw6SFgse",
+      "authTag": "0fgcPUPfBxTE5oOpR98WaA=="
+    },
+    "unencryptedChecksum": "c8495d081f66424b3b673a3ebaa8c5f0e137ea57d04b5d32579262396a53b3f9",
+    "encryptedChecksum": "79f34c3faa3cd61fbcc111c5b7fe8e3dbc464504d857d6b8dfbde819fe231922"
   }
 ]
