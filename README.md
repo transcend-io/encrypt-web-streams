@@ -308,6 +308,8 @@ On M3 Pro, decrypting a 6.3GB file:
 - in Webkit (i.e., Safari), this implementation decrypts at 60 MB/s with 3 MB of memory usage.
 - in Firefox, this implementation decrypts at 4 MB/s with 3 MB of memory usage.
 
+Firefox is slower on M3 Pro. This is likely because Chrome and Safari ship as native AArch64 binaries, whereas an x86-only Firefox (as of August 2, 2025) will run under Rosetta 2, causing emulation overhead.
+
 Run `pnpm benchmark` to see the speed of the implementation and compare it against WebCrypto (but note that WebCrypto cannot stream, so it's not a perfect comparison).
 
 ## Supporting Large Files
@@ -316,13 +318,7 @@ First, you should avoid buffering data in memory in your implementation. For exa
 
 Second, there are volumes of data for which counting the volume of data itself becomes a problem. In JavaScript, counting bits will overflow at a 1.13 PB file. In Wasm, it's a bit more complicated. The Rust crate, `aes-gcm-stream`, originally used `usize` bit counters, which in Wasm is `u32`, and thus the bit counter overflowed at 536 MB. This repo patches that crate to use `u64` for the counter, meaning the theoretical maximum file size is 2^64 bytes, or 16 EB. Using this in Wasm requires similar attention to any counters you implement.
 
-Some browsers may also have built-in counters which will fail when streaming large amounts of data:
-
-- Chromium (i.e., Chrome): unlimited data (fast; 60 MB/s)
-- Webkit (i.e., Safari): OOM error at files > ~3 GB (fast; 60 MB/s) [bug](https://github.com/transcend-io/encrypt-web-streams/issues/1)
-- Firefox: unlimited data (slow; 4 MB/s)
-
-In general, staying under 3 GB per stream is the safest guarantee for wide browser support.
+Some browsers have built-in counters which will fail when streaming large amounts of data. In general, staying under ~2 GB per stream is the safest guarantee for wide browser support.
 
 ## Contributing
 
