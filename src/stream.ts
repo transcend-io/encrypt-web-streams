@@ -75,28 +75,29 @@ export function createEncryptionStream(
     const enc = new Encryptor(key, iv);
     if (additionalData) enc.init_adata(additionalData);
 
-    let hasData = false;
     let detachedAuthTag: Uint8Array | undefined;
+    let streamFinished = false;
 
     const stream = new TransformStream<Uint8Array, Uint8Array>({
       transform(chunk, controller) {
         // ensure Uint8Array
         const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
         const out = enc.update(buf);
-        hasData = true;
         // Only enqueue if there's actual output
         if (out.length > 0) {
           controller.enqueue(out);
         }
       },
       flush(controller) {
-        if (hasData) {
+        try {
           const final = enc.finalize();
           const remainingBytes = final.slice(0, -16);
           const finalAuthTag = final.slice(-16);
 
           // Enqueue remaining bytes
-          controller.enqueue(remainingBytes);
+          if (remainingBytes.length > 0) {
+            controller.enqueue(remainingBytes);
+          }
 
           if (detachAuthTag) {
             // Store auth tag separately
@@ -105,6 +106,8 @@ export function createEncryptionStream(
             // Append auth tag
             controller.enqueue(finalAuthTag);
           }
+        } finally {
+          streamFinished = true;
         }
       },
     });
@@ -118,10 +121,14 @@ export function createEncryptionStream(
             '\nThe authentication tag will be appended to the ciphertext.',
         );
       }
-      if (!detachedAuthTag) {
+      if (!streamFinished) {
         throw new Error(
           'The authentication tag is not available until the encryption stream has finished.',
         );
+      }
+      if (!detachedAuthTag) {
+        // This should be impossible, but it makes TypeScript happy
+        throw new Error('The authentication tag is missing.');
       }
       return detachedAuthTag;
     };
@@ -162,7 +169,7 @@ export function createDecryptionStream(
   iv: Uint8Array,
   {
     additionalData,
-    authTag,
+    authTag: originalAuthTagArgument,
   }: {
     /** Optional additional authenticated data */
     additionalData?: Uint8Array;
@@ -179,21 +186,25 @@ export function createDecryptionStream(
     authTag?: Uint8Array | 'defer';
   } = {},
 ): DecryptionStream {
+  let authTagIsDeferred = false;
   try {
     const dec = new Decryptor(key, iv);
     if (additionalData) dec.init_adata(additionalData);
 
     // Validate the authTag
     if (
-      authTag !== undefined &&
-      authTag !== 'defer' &&
-      !(authTag instanceof Uint8Array)
+      originalAuthTagArgument !== undefined &&
+      originalAuthTagArgument !== 'defer' &&
+      !(originalAuthTagArgument instanceof Uint8Array)
     ) {
       throw new TypeError(
         'The `authTag` must be a Uint8Array, undefined, or "defer".',
       );
     }
-    if (authTag instanceof Uint8Array && authTag.length !== 16) {
+    if (
+      originalAuthTagArgument instanceof Uint8Array &&
+      originalAuthTagArgument.length !== 16
+    ) {
       throw new TypeError('The `authTag` must be 16 bytes long.');
     }
 
@@ -204,11 +215,14 @@ export function createDecryptionStream(
     } = promiseWithResolvers<Uint8Array | undefined>();
 
     // Resolve the authTag result right away if the auth tag is not deferred.
-    if (authTag !== 'defer') {
-      resolveAuthTagArgument(authTag);
+    if (originalAuthTagArgument === 'defer') {
+      authTagIsDeferred = true;
+    } else {
+      resolveAuthTagArgument(originalAuthTagArgument);
     }
 
     let hasData = false;
+    let streamFinished = false;
 
     const stream = new TransformStream<Uint8Array, Uint8Array>({
       transform(chunk, controller) {
@@ -221,47 +235,71 @@ export function createDecryptionStream(
         }
       },
       async flush(controller) {
-        if (hasData) {
-          // Wait for the auth tag to be set, if not already
-          const timeout = setTimeout(() => {
-            console.warn(
-              'The decryption stream finished 10 seconds ago, but the authentication tag has still not been set.',
-            );
-          }, 10_000);
-          const authTagArgument = await authTagArgumentPromise;
-          clearTimeout(timeout);
+        let timeout: number | undefined;
+        try {
+          if (hasData) {
+            // Wait for the auth tag to be set, if not already
+            timeout = setTimeout(() => {
+              console.warn(
+                'The decryption stream finished 10 seconds ago, but the authentication tag has still not been set.',
+              );
+            }, 10_000);
+            const authTagArgument = await authTagArgumentPromise;
+            clearTimeout(timeout);
 
-          if (authTagArgument !== undefined) {
-            // Append the auth tag as the final chunk (else assume it's already appended to the ciphertext)
-            const out = dec.update(authTagArgument);
-            if (out.length > 0) {
-              controller.enqueue(out);
+            if (authTagArgument !== undefined) {
+              // Append the auth tag as the final chunk (else assume it's already appended to the ciphertext)
+              const out = dec.update(authTagArgument);
+              if (out.length > 0) {
+                controller.enqueue(out);
+              }
+            }
+
+            // Note: `finalize()` throws on auth failure
+            const last = dec.finalize();
+            if (last.length > 0) {
+              controller.enqueue(last);
             }
           }
-
-          // Note: `finalize()` throws on auth failure
-          const last = dec.finalize();
-          if (last.length > 0) {
-            controller.enqueue(last);
-          }
+        } finally {
+          // If the stream is aborted, clear the timeout
+          clearTimeout(timeout);
+          streamFinished = true;
         }
       },
     });
 
     const decryptionStream = stream as DecryptionStream;
     decryptionStream.setAuthTag = (authTag: Uint8Array) => {
-      if (!(authTag instanceof Uint8Array) || authTag.length !== 16) {
-        rejectAuthTagArgument(
-          new TypeError(
+      try {
+        if (!authTagIsDeferred) {
+          throw new TypeError(
+            'Unexpected call to setAuthTag(), the `authTag` passed to `createDecryptionStream()` must be "defer" when using this library in the "defer" mode.',
+          );
+        }
+        if (streamFinished) {
+          throw new Error(
+            'The decryption stream has already finished, so the authentication tag cannot be set.',
+          );
+        }
+        // Validate the authTag
+        const deferredAuthTag = authTag as unknown;
+        if (
+          !(deferredAuthTag instanceof Uint8Array) ||
+          deferredAuthTag.length !== 16
+        ) {
+          throw new TypeError(
             'The `authTag` must be a Uint8Array and 16 bytes long.',
-          ),
-        );
-        throw new TypeError(
-          'The `authTag` must be a Uint8Array and 16 bytes long.',
-        );
+          );
+        }
+        // From this point on, the auth tag is no longer deferred
+        authTagIsDeferred = false;
+        // Resolve the promise for the detached authentication tag, allowing the decipher to finalize.
+        resolveAuthTagArgument(deferredAuthTag);
+      } catch (error) {
+        rejectAuthTagArgument(error); // Reject the promise to error the stream
+        throw error; // Also throw synchronously for the caller
       }
-      // Resolve the promise for the detached authentication tag, allowing the decipher to finalize.
-      resolveAuthTagArgument(authTag);
     };
 
     return decryptionStream;
