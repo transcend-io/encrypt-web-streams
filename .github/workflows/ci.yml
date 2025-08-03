@@ -45,6 +45,11 @@ jobs:
       - name: Format
         run: pnpm run format
 
+      - name: Debug wasm reproducibility
+        run: |
+          sudo apt-get update && sudo apt-get install -y wabt
+          wasm2wat wasm/aes_gcm_stream_wasm_bg.wasm -o wasm/aes_gcm_stream_wasm_bg.wat
+
       - name: Ensure no changed files
         run: git diff --exit-code
 
@@ -142,11 +147,6 @@ jobs:
         run: |
           pnpm config set always-auth true
           pnpm config set //registry.npmjs.org/:_authToken "${{ secrets.NPM_TOKEN }}"
-
-      - name: Debug wasm reproducibility
-        run: |
-          sudo apt-get update && sudo apt-get install -y wabt
-          wasm2wat wasm/aes_gcm_stream_wasm_bg.wasm -o wasm/aes_gcm_stream_wasm_bg.wat
 
       - name: Ensure no changed files
         run: git diff --exit-code
