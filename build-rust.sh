@@ -1,9 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -euo pipefail
+
 # This script builds the rust wasm package with flags to ensure a reproducible build.
-
-set -e
-
-# Enter the rust directory
 cd rust
 
 # Set RUSTFLAGS to remap user-specific paths to generic paths.

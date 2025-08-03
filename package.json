@@ -25,7 +25,7 @@
     "build": "pnpm run build:rust && pnpm run build:js",
     "build:rust": "bash build-rust.sh",
     "build:js": "tsc --project tsconfig.json",
-    "test:rust": "pnpm build && pnpm run test:rust:ci",
+    "test:rust": "pnpm run test:rust:ci",
     "test:js": "pnpm build && pnpm run test:js:ci",
     "test:fixtures": "pnpm build && pnpm run test:fixtures:ci",
     "test:rust:ci": "cd rust && wasm-pack test --chrome && cargo test && cd patches/aes-gcm-stream && cargo test",
