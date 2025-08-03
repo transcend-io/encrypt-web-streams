@@ -30,6 +30,8 @@ jobs:
 
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache-workspaces: './rust -> target'
 
       - name: Cache rust target directory
         uses: actions/cache@v4
@@ -44,11 +46,6 @@ jobs:
 
       - name: Format
         run: pnpm run format
-
-      - name: Debug wasm reproducibility
-        run: |
-          sudo apt-get update && sudo apt-get install -y wabt
-          wasm2wat wasm/aes_gcm_stream_wasm_bg.wasm -o wasm/aes_gcm_stream_wasm_bg.wat
 
       - name: Ensure no changed files
         run: git diff --exit-code
@@ -97,6 +94,8 @@ jobs:
       - name: Setup Rust
         if: ${{ matrix.needs_rust }}
         uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache-workspaces: './rust -> target'
 
       - name: Restore rust target cache
         if: ${{ matrix.needs_rust }}
