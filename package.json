@@ -87,6 +87,7 @@
     "web",
     "web-native",
     "encryption",
+    "e2ee",
     "crypto"
   ]
 }

@@ -281,6 +281,28 @@ await decryptionPromise;
 
 This requires careful handling because the promise will wait indefinitely if the authentication tag is not set. For debugging purposes, if an authentication tag has not been set for more than 10 seconds after the stream has finished decrypting, a warning will be logged.
 
+### Saving to Disk
+
+Use [`FileSystemWritableFileStream`](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream) to write to disk.
+
+```ts
+button.addEventListener('click', async () => {
+  const fileHandle = await window.showSaveFilePicker({
+    suggestedName: 'unreleased_movie.mp4',
+  });
+  const fileSystemWritableStream = await fileHandle.createWritable();
+  const response = await fetch('/e2ee-uploads/unreleased_movie.mp4.enc');
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch file: ${response.statusText}`);
+  }
+
+  await response.body
+    .pipeThrough(createDecryptionStream(key, iv))
+    .pipeTo(fileSystemWritableStream);
+});
+```
+
 ---
 
 ## Security
