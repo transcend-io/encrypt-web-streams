@@ -48,6 +48,19 @@ function createReadableStream(data: Uint8Array): ReadableStream<Uint8Array> {
   });
 }
 
+it('should fail before Wasm module is initialized', () => {
+  assert.throws(
+    () => createEncryptionStream(new Uint8Array(32), new Uint8Array(12)),
+    /Failed to create encrypt stream.*?Make sure to call `await init\(\)` before creating an encryption stream\./,
+    'Should fail before Wasm module is initialized',
+  );
+  assert.throws(
+    () => createDecryptionStream(new Uint8Array(32), new Uint8Array(12)),
+    /Failed to create decrypt stream.*?Make sure to call `await init\(\)` before creating a decryption stream\./,
+    'Should fail before Wasm module is initialized',
+  );
+});
+
 it('should initialize Wasm module from exported API', async () => {
   await init();
 });

@@ -6,7 +6,7 @@ We are currently providing security updates for the following versions of `aes-g
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.x.x   | :white_check_mark: |
+| 1.x.x   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 

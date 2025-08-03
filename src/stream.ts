@@ -1,10 +1,14 @@
-import initWasm, { Decryptor, Encryptor } from '../wasm/aes_gcm_stream_wasm.js';
+import initWasm, {
+  Decryptor,
+  Encryptor,
+  type InitOutput,
+} from '../wasm/aes_gcm_stream_wasm.js';
 import { promiseWithResolvers } from './helpers.js';
 
 /** The required length of the authentication tag in bytes. */
 const AUTH_TAG_LENGTH = 16;
 
-let _wasmReady: true | undefined;
+let _wasmReady: InitOutput | undefined;
 
 /**
  * Initialize the WebAssembly module.
@@ -12,10 +16,7 @@ let _wasmReady: true | undefined;
  * @returns A promise that resolves when the Wasm module has been initialized.
  */
 export async function init(): Promise<void> {
-  if (!_wasmReady) {
-    await initWasm();
-    _wasmReady = true;
-  }
+  _wasmReady ??= await initWasm();
 }
 
 /**
@@ -73,6 +74,11 @@ export function createEncryptionStream(
   } = {},
 ): EncryptionStream {
   try {
+    if (!_wasmReady) {
+      throw new TypeError(
+        'The Wasm module has not been initialized. Make sure to call `await init()` before creating an encryption stream.',
+      );
+    }
     const enc = new Encryptor(key, iv);
     if (additionalData) enc.init_adata(additionalData);
 
@@ -139,7 +145,9 @@ export function createEncryptionStream(
     return encryptionStream;
   } catch (error) {
     if (error instanceof Error) {
-      throw new TypeError(`Failed to create encrypt stream:`, { cause: error });
+      throw new TypeError(`Failed to create encrypt stream: ${error.message}`, {
+        cause: error,
+      });
     }
     throw new TypeError(`Failed to create encrypt stream: ${String(error)}`);
   }
@@ -190,6 +198,11 @@ export function createDecryptionStream(
   } = {},
 ): DecryptionStream {
   try {
+    if (!_wasmReady) {
+      throw new TypeError(
+        'The Wasm module has not been initialized. Make sure to call `await init()` before creating a decryption stream.',
+      );
+    }
     const dec = new Decryptor(key, iv);
     if (additionalData) dec.init_adata(additionalData);
 
@@ -316,7 +329,9 @@ export function createDecryptionStream(
     return decryptionStream;
   } catch (error) {
     if (error instanceof Error) {
-      throw new TypeError(`Failed to create decrypt stream:`, { cause: error });
+      throw new TypeError(`Failed to create decrypt stream: ${error.message}`, {
+        cause: error,
+      });
     }
     throw new TypeError(`Failed to create decrypt stream: ${String(error)}`);
   }
