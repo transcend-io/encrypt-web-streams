@@ -83,12 +83,14 @@ export function createEncryptionStream(
 
     const stream = new TransformStream<Uint8Array, Uint8Array>({
       transform(chunk, controller) {
-        // ensure Uint8Array
         const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
-        const out = enc.update(buf);
-        // Only enqueue if there's actual output
-        if (out.length > 0) {
-          controller.enqueue(out);
+        // Process in smaller chunks to avoid a single large allocation in Wasm
+        const wasmChunkSize = 65_536; // 64 KiB
+        for (let index = 0; index < buf.length; index += wasmChunkSize) {
+          const out = enc.update(buf.subarray(index, index + wasmChunkSize));
+          if (out.length > 0) {
+            controller.enqueue(out);
+          }
         }
       },
       flush(controller) {
@@ -221,10 +223,13 @@ export function createDecryptionStream(
     const stream = new TransformStream<Uint8Array, Uint8Array>({
       transform(chunk, controller) {
         const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
-        const out = dec.update(buf);
-        // Only enqueue if there's actual output
-        if (out.length > 0) {
-          controller.enqueue(out);
+        // Process in smaller chunks to avoid a single large allocation in Wasm
+        const wasmChunkSize = 65_536; // 64 KiB
+        for (let index = 0; index < buf.length; index += wasmChunkSize) {
+          const out = dec.update(buf.subarray(index, index + wasmChunkSize));
+          if (out.length > 0) {
+            controller.enqueue(out);
+          }
         }
       },
       async flush(controller) {

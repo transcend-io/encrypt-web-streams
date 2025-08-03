@@ -30,7 +30,7 @@ const bigGeneratedFiles: {
     filename: 'big6GB.dat',
     size: 6 * 1024 * 1024 * 1024,
     seed: 'bar',
-    enabled: false, // switch to true to test a 6GB file
+    enabled: true, // switch to true to test a 6GB file
   },
 ];
 

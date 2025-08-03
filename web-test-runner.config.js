@@ -11,7 +11,7 @@ const TIMEOUT_MS = 10 * 60 * 1000;
  */
 const environment = {
   /** @type {'include' | 'skip' | 'only'} */
-  FF_BIG_FIXTURES: 'skip',
+  FF_BIG_FIXTURES: 'include',
 };
 
 /** @type {import('@web/test-runner').TestRunnerConfig} */
