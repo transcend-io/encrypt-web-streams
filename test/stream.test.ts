@@ -422,7 +422,7 @@ it('should throw an error if setAuthTag() is called more than once', async () =>
   assert.throws(() => {
     // Set the auth tag again
     decryptionStream.setAuthTag(authTag);
-  }, /Unexpected call to setAuthTag/);
+  }, /Unexpected call to `setAuthTag\(\)`/);
 });
 
 it('should throw an error if setAuthTag() is called after the stream is finished', async () => {

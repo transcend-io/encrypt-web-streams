@@ -5,6 +5,9 @@ import initWasm, {
 } from '../wasm/aes_gcm_stream_wasm.js';
 import { promiseWithResolvers } from './helpers.js';
 
+/** The required length of the authentication tag in bytes. */
+const AUTH_TAG_LENGTH = 16;
+
 let _wasmReady: Promise<InitOutput> | undefined;
 
 /**
@@ -91,8 +94,8 @@ export function createEncryptionStream(
       flush(controller) {
         try {
           const final = enc.finalize();
-          const remainingBytes = final.slice(0, -16);
-          const finalAuthTag = final.slice(-16);
+          const remainingBytes = final.slice(0, -AUTH_TAG_LENGTH);
+          const finalAuthTag = final.slice(-AUTH_TAG_LENGTH);
 
           // Enqueue remaining bytes
           if (remainingBytes.length > 0) {
@@ -127,7 +130,7 @@ export function createEncryptionStream(
         );
       }
       if (!detachedAuthTag) {
-        // This should be impossible, but it makes TypeScript happy
+        // This error should be unreachable
         throw new Error('The authentication tag is missing.');
       }
       return detachedAuthTag;
@@ -149,20 +152,32 @@ export interface DecryptionStream
   setAuthTag(authTag: Uint8Array): void;
 }
 
+/** Options for `createDecryptionStream`. */
+export interface DecryptionStreamOptions {
+  /** Optional additional authenticated data */
+  additionalData?: Uint8Array;
+  /**
+   * The detached authentication tag, if the ciphertext does not have it
+   * appended.
+   *
+   * If `authTag` is set to `'defer'`, the authentication tag must be set later
+   * by calling `setAuthTag()`. The decryption stream will not finalize until it
+   * is set.
+   *
+   * @see {EncryptionStream.getAuthTag}
+   */
+  authTag?: Uint8Array | 'defer';
+}
+
 /**
  * Create a native TransformStream that decrypts via a Wasm AES-GCM decryption
  * implementation.
  *
- * @param {Uint8Array} key - 32-byte encryption key
- * @param {Uint8Array} iv - 12-byte iv (recommended)
- * @param {Object} options - Optional options
- * @param {Uint8Array} options.additionalData - Optional additional
- *   authenticated data
- * @param {Uint8Array} options.detachedAuthTag - Optional detached
- *   authentication tag to append to ciphertext, if the ciphertext does not
- *   already contain an appended authentication tag.
+ * @param key - 32-byte encryption key
+ * @param iv - 12-byte iv (recommended)
+ * @param options - Additional options for the decryption stream
  * @returns {TransformStream} A `TransformStream` that decrypts the ciphertext
- *   and verifies the authentication tag.
+ *   authentication tag.
  */
 export function createDecryptionStream(
   key: Uint8Array,
@@ -170,55 +185,35 @@ export function createDecryptionStream(
   {
     additionalData,
     authTag: originalAuthTagArgument,
-  }: {
-    /** Optional additional authenticated data */
-    additionalData?: Uint8Array;
-    /**
-     * The detached authentication tag, if the ciphertext does not have it
-     * appended.
-     *
-     * If `authTag` is set to `'defer'`, the authentication tag must be set
-     * later by calling `setAuthTag()`. The decryption stream will not finalize
-     * until it is set.
-     *
-     * @see {EncryptionStream.getAuthTag}
-     */
-    authTag?: Uint8Array | 'defer';
-  } = {},
+  }: DecryptionStreamOptions = {},
 ): DecryptionStream {
-  let authTagIsDeferred = false;
   try {
     const dec = new Decryptor(key, iv);
     if (additionalData) dec.init_adata(additionalData);
 
-    // Validate the authTag
+    // Validate options.authTag
     if (
       originalAuthTagArgument !== undefined &&
       originalAuthTagArgument !== 'defer' &&
       !(originalAuthTagArgument instanceof Uint8Array)
     ) {
       throw new TypeError(
-        'The `authTag` must be a Uint8Array, undefined, or "defer".',
+        `\`options.authTag\` must be a Uint8Array with ${AUTH_TAG_LENGTH.toString()} bytes, undefined, or "defer".`,
       );
-    }
-    if (
-      originalAuthTagArgument instanceof Uint8Array &&
-      originalAuthTagArgument.length !== 16
-    ) {
-      throw new TypeError('The `authTag` must be 16 bytes long.');
     }
 
     const {
-      promise: authTagArgumentPromise,
-      resolve: resolveAuthTagArgument,
-      reject: rejectAuthTagArgument,
+      promise: authTagPromise,
+      resolve: resolveAuthTag,
+      reject: rejectAuthTag,
     } = promiseWithResolvers<Uint8Array | undefined>();
 
     // Resolve the authTag result right away if the auth tag is not deferred.
+    let authTagIsDeferred = false;
     if (originalAuthTagArgument === 'defer') {
       authTagIsDeferred = true;
     } else {
-      resolveAuthTagArgument(originalAuthTagArgument);
+      resolveAuthTag(originalAuthTagArgument);
     }
 
     let streamFinished = false;
@@ -241,18 +236,19 @@ export function createDecryptionStream(
               'The decryption stream finished 10 seconds ago, but the authentication tag has still not been set.',
             );
           }, 10_000);
-          const authTagArgument = await authTagArgumentPromise;
+          const authTag = await authTagPromise;
           clearTimeout(timeout);
 
-          if (authTagArgument !== undefined) {
+          // If the user supplied a detached auth tag...
+          if (authTag !== undefined) {
             // Append the auth tag as the final chunk (else assume it's already appended to the ciphertext)
-            const out = dec.update(authTagArgument);
+            const out = dec.update(authTag);
             if (out.length > 0) {
               controller.enqueue(out);
             }
           }
 
-          // Note: `finalize()` throws on auth failure
+          // Note: `finalize()` throws on failure of the authentication tag
           const last = dec.finalize();
           if (last.length > 0) {
             controller.enqueue(last);
@@ -275,7 +271,7 @@ export function createDecryptionStream(
         }
         if (!authTagIsDeferred) {
           throw new TypeError(
-            'Unexpected call to setAuthTag(), the `authTag` passed to `createDecryptionStream()` must be "defer" when using this library in the "defer" mode.',
+            'Unexpected call to `setAuthTag()`, the `authTag` passed to `createDecryptionStream()` must be "defer" when using this library in the "defer" mode.',
           );
         }
 
@@ -283,18 +279,18 @@ export function createDecryptionStream(
         const deferredAuthTag = authTag as unknown;
         if (
           !(deferredAuthTag instanceof Uint8Array) ||
-          deferredAuthTag.length !== 16
+          deferredAuthTag.length !== AUTH_TAG_LENGTH
         ) {
           throw new TypeError(
-            'The `authTag` must be a Uint8Array and 16 bytes long.',
+            `The \`authTag\` must be a Uint8Array with ${AUTH_TAG_LENGTH.toString()} bytes.`,
           );
         }
         // From this point on, the auth tag is no longer deferred
         authTagIsDeferred = false;
         // Resolve the promise for the detached authentication tag, allowing the decipher to finalize.
-        resolveAuthTagArgument(deferredAuthTag);
+        resolveAuthTag(deferredAuthTag);
       } catch (error) {
-        rejectAuthTagArgument(error); // Reject the promise to error the stream
+        rejectAuthTag(error); // Reject the promise to error the stream
         throw error; // Also throw synchronously for the caller
       }
     };
