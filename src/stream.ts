@@ -154,32 +154,20 @@ export interface DecryptionStream
   setAuthTag(authTag: Uint8Array): void;
 }
 
-/** Options for `createDecryptionStream`. */
-export interface DecryptionStreamOptions {
-  /** Optional additional authenticated data */
-  additionalData?: Uint8Array;
-  /**
-   * The detached authentication tag, if the ciphertext does not have it
-   * appended.
-   *
-   * If `authTag` is set to `'defer'`, the authentication tag must be set later
-   * by calling `setAuthTag()`. The decryption stream will not finalize until it
-   * is set.
-   *
-   * @see {EncryptionStream.getAuthTag}
-   */
-  authTag?: Uint8Array | 'defer';
-}
-
 /**
  * Create a native TransformStream that decrypts via a Wasm AES-GCM decryption
  * implementation.
  *
- * @param key - 32-byte encryption key
- * @param iv - 12-byte iv (recommended)
- * @param options - Additional options for the decryption stream
+ * @param {Uint8Array} key - 32-byte encryption key
+ * @param {Uint8Array} iv - 12-byte iv (recommended)
+ * @param {Object} options - Optional options
+ * @param {Uint8Array} options.additionalData - Optional additional
+ *   authenticated data
+ * @param {Uint8Array} options.detachedAuthTag - Optional detached
+ *   authentication tag to append to ciphertext, if the ciphertext does not
+ *   already contain an appended authentication tag.
  * @returns {TransformStream} A `TransformStream` that decrypts the ciphertext
- *   authentication tag.
+ *   and verifies the authentication tag.
  */
 export function createDecryptionStream(
   key: Uint8Array,
@@ -187,7 +175,21 @@ export function createDecryptionStream(
   {
     additionalData,
     authTag: originalAuthTagArgument,
-  }: DecryptionStreamOptions = {},
+  }: {
+    /** Optional additional authenticated data */
+    additionalData?: Uint8Array;
+    /**
+     * The detached authentication tag, if the ciphertext does not have it
+     * appended.
+     *
+     * If `authTag` is set to `'defer'`, the authentication tag must be set
+     * later by calling `setAuthTag()`. The decryption stream will not finalize
+     * until it is set.
+     *
+     * @see {EncryptionStream.getAuthTag}
+     */
+    authTag?: Uint8Array | 'defer';
+  } = {},
 ): DecryptionStream {
   try {
     const dec = new Decryptor(key, iv);
