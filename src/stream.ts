@@ -1,23 +1,21 @@
-import initWasm, {
-  Decryptor,
-  Encryptor,
-  type InitOutput,
-} from '../wasm/aes_gcm_stream_wasm.js';
+import initWasm, { Decryptor, Encryptor } from '../wasm/aes_gcm_stream_wasm.js';
 import { promiseWithResolvers } from './helpers.js';
 
 /** The required length of the authentication tag in bytes. */
 const AUTH_TAG_LENGTH = 16;
 
-let _wasmReady: Promise<InitOutput> | undefined;
+let _wasmReady: true | undefined;
 
 /**
  * Initialize the WebAssembly module.
  *
- * @returns A promise that resolves to the Wasm module.
+ * @returns A promise that resolves when the Wasm module has been initialized.
  */
-export function init(): Promise<InitOutput> {
-  _wasmReady ??= initWasm();
-  return _wasmReady;
+export async function init(): Promise<void> {
+  if (!_wasmReady) {
+    await initWasm();
+    _wasmReady = true;
+  }
 }
 
 /**

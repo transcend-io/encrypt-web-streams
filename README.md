@@ -46,7 +46,7 @@ npm install @transcend-io/encrypt-web-streams
 
 ## API Reference
 
-Provides TransformStreams for AES-256-GCM encryption and decryption.
+Provides `TransformStream` implementations for AES-256-GCM encryption and decryption, powered by a WebAssembly module.
 
 ```ts
 import {
@@ -56,9 +56,121 @@ import {
 } from '@transcend-io/encrypt-web-streams';
 ```
 
-- `init(): Promise` — asynchronously loads the Wasm module
-- `createEncryptionStream(key: Uint8Array, iv: Uint8Array, options?)` — returns a `TransformStream<Uint8Array, Uint8Array>` that encrypts a stream of plaintext data.
-- `createDecryptionStream(key: Uint8Array, iv: Uint8Array, options?)` — returns a `TransformStream<Uint8Array, Uint8Array>` that decrypts a stream of encrypted data.
+### `init()`
+
+```typescript
+function init(): Promise<void>;
+```
+
+Asynchronously loads and initializes the WebAssembly module. This must be called and awaited before any other functions from this library can be used.
+
+**Returns:**
+
+A `Promise` that resolves when the Wasm module has been initialized.
+
+### `createEncryptionStream()`
+
+```typescript
+function createEncryptionStream(
+  key: Uint8Array,
+  iv: Uint8Array,
+  options?: {
+    additionalData?: Uint8Array;
+    detachAuthTag?: boolean;
+  },
+): EncryptionStream;
+```
+
+Creates a `TransformStream` that encrypts a stream of plaintext data using AES-256-GCM.
+
+**Parameters:**
+
+- `key` (`Uint8Array`): A 32-byte encryption key.
+- `iv` (`Uint8Array`): A 12-byte initialization vector (IV). It is highly recommended to use a new, random IV for each encryption.
+- `options` (optional `object`):
+  - `additionalData` (`Uint8Array`, optional): Optional additional authenticated data (AAD).
+  - `detachAuthTag` (`boolean`, optional, default: `false`): If `true`, the 16-byte authentication tag is not appended to the ciphertext. It must be retrieved separately using the `getAuthTag()` method on the returned stream after the stream has completed.
+
+**Returns:**
+
+An `EncryptionStream`, which is a `TransformStream` with an added `getAuthTag()` method.
+
+### `EncryptionStream`
+
+This interface extends `TransformStream<Uint8Array, Uint8Array>` with an additional method for when you're working with detached authentication tags.
+
+#### `getAuthTag()`
+
+```typescript
+interface EncryptionStream extends TransformStream<Uint8Array, Uint8Array> {
+  getAuthTag(): Uint8Array;
+}
+```
+
+Returns the 16-byte authentication tag.
+
+This method should only be called if:
+
+1.  `options.detachAuthTag` was `true` when the stream was created.
+2.  The encryption stream has been fully read and is closed.
+
+**Throws:**
+
+- `TypeError`: If `options.detachAuthTag` was `false`.
+- `Error`: If the encryption stream has not yet finished.
+
+### `createDecryptionStream()`
+
+```typescript
+function createDecryptionStream(
+  key: Uint8Array,
+  iv: Uint8Array,
+  options?: {
+    additionalData?: Uint8Array;
+    authTag?: Uint8Array | 'defer';
+  },
+): DecryptionStream;
+```
+
+Creates a `TransformStream` that decrypts a stream of encrypted data using AES-256-GCM.
+
+**Parameters:**
+
+- `key` (`Uint8Array`): A 32-byte encryption key.
+- `iv` (`Uint8Array`): A 12-byte initialization vector (IV).
+- `options` (optional `object`):
+  - `additionalData` (`Uint8Array`, optional): Optional additional authenticated data (AAD).
+  - `authTag` (`Uint8Array | 'defer'`, optional): The 16-byte authentication tag. Use this if the tag is detached from the ciphertext.
+    - If `authTag` is a `Uint8Array`, it will be used to verify the ciphertext.
+    - If `authTag` is set to `'defer'`, the authentication tag must be provided later by calling `setAuthTag()` on the returned stream. The decryption stream will not finalize until the tag is set.
+    - If `authTag` is `undefined`, the library assumes the authentication tag is appended to the end of the ciphertext stream.
+
+**Returns:**
+
+A `DecryptionStream`, which is a `TransformStream` with an added `setAuthTag()` method.
+
+### `DecryptionStream`
+
+This interface extends `TransformStream<Uint8Array, Uint8Array>` with an additional method for when you're working with detached authentication tags.
+
+#### `setAuthTag()`
+
+```typescript
+interface DecryptionStream extends TransformStream<Uint8Array, Uint8Array> {
+  setAuthTag(authTag: Uint8Array): void;
+}
+```
+
+Sets the 16-byte authentication tag for verification. This method must be used when `createDecryptionStream` was called with the `authTag: 'defer'` option.
+
+**Parameters:**
+
+- `authTag` (`Uint8Array`): The 16-byte authentication tag.
+
+**Throws:**
+
+- `TypeError`: If called when the `authTag` option was not `'defer'`.
+- `Error`: If the decryption stream has already finished.
 
 ## Streaming
 

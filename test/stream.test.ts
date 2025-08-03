@@ -28,8 +28,7 @@ function createReadableStream(data: Uint8Array): ReadableStream<Uint8Array> {
 }
 
 it('should initialize Wasm module from exported API', async () => {
-  const wasm = await init();
-  assert.ok(wasm, 'Wasm module should be initialized');
+  await init();
 });
 
 it('should not throw if Wasm module is already initialized', async () => {

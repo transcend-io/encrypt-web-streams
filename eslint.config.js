@@ -13,11 +13,7 @@ const eslintConfig = tseslint.config(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: [
-            '*.config.js',
-            'example/*.js',
-            'benchmark/src/*.ts',
-          ],
+          allowDefaultProject: ['*.config.js'],
         },
       },
     },
@@ -26,7 +22,7 @@ const eslintConfig = tseslint.config(
     },
   },
   {
-    ignores: ['dist', 'wasm', 'rust'],
+    ignores: ['dist', 'wasm', 'rust', 'hidden'],
   },
 );
 
