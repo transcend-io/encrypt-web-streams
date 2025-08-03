@@ -34,7 +34,6 @@
     "rebuild-fixtures": "tsx test/fixtures/rebuild-fixtures.ts",
     "benchmark": "web-test-runner --node-resolve --playwright --browsers chromium firefox webkit --files test/speed.test.ts",
     "clean": "rm -rf wasm/ dist/ rust/target/",
-    "prepublishOnly": "pnpm run build",
     "lint": "pnpm run \"/^lint:.*/\"",
     "lint:prettier": "prettier --check . --log-level warn",
     "lint:eslint": "eslint .",
