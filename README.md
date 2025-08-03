@@ -144,88 +144,87 @@ For CPU-intensive tasks like encryption or decryption, it's best to use a Web Wo
 
 The library works out-of-the-box in workers. The following example shows how to set up an encryption worker.
 
-1. Create the Worker Script
+**Create the Worker Script**
 
-   First, create a file that will act as your worker, for example, encrypt-worker.js. This script will import the library, wait for a message from the main thread, and then perform the encryption.
+First, create a file that will act as your worker, for example, `encrypt-worker.js`. This script will import the library, wait for a message from the main thread, and then perform the encryption.
 
-   ```ts
-   // encrypt-worker.js
-   import {
-     init,
-     createEncryptionStream,
-   } from '@transcend-io/encrypt-web-streams';
+```ts
+// encrypt-worker.js
+import {
+  init,
+  createEncryptionStream,
+} from '@transcend-io/encrypt-web-streams';
 
-   // Initialize the Wasm module within the worker's scope.
-   // This promise ensures we don't process messages until the Wasm is ready.
-   const wasmReady = init();
+// Initialize the Wasm module within the worker's scope.
+// This promise ensures we don't process messages until the Wasm is ready.
+const wasmReady = init();
 
-   self.onmessage = async (event) => {
-     // Ensure Wasm is ready before proceeding.
-     await wasmReady;
+self.onmessage = async (event) => {
+  // Ensure Wasm is ready before proceeding.
+  await wasmReady;
 
-     const { readable, writable, key, iv } = event.data;
+  const { readable, writable, key, iv } = event.data;
 
-     // Create the encryption stream inside the worker.
-     const encryptionStream = createEncryptionStream(key, iv);
+  // Create the encryption stream inside the worker.
+  const encryptionStream = createEncryptionStream(key, iv);
 
-     // Pipe the plaintext through the encryption stream and send the
-     // encrypted output back to the main thread's WritableStream.
-     await readable.pipeThrough(encryptionStream).pipeTo(writable);
+  // Pipe the plaintext through the encryption stream and send the
+  // encrypted output back to the main thread's WritableStream.
+  await readable.pipeThrough(encryptionStream).pipeTo(writable);
 
-     console.log('Worker has finished encrypting the stream.');
-   };
-   ```
+  console.log('Worker has finished encrypting the stream.');
+};
+```
 
-2. Use the Worker from the Main Thread
+**Use the Worker from the Main Thread**
 
-   From your main application code, create an instance of the worker. Then, create the streams and transfer them to the worker to begin processing.
+From your main application code, create an instance of the worker. Then, create the streams and transfer them to the worker to begin processing.
 
-   ```ts
-   // This code runs on the main thread.
-   const worker = new Worker(new URL('./encrypt-worker.js', import.meta.url), {
-     type: 'module',
-   });
+```ts
+// This code runs on the main thread
+const worker = new Worker(new URL('./encrypt-worker.js', import.meta.url), {
+  type: 'module',
+});
 
-   // Generate a key and IV to send to the worker.
-   const key = crypto.getRandomValues(new Uint8Array(32));
-   const iv = crypto.getRandomValues(new Uint8Array(12));
+// Generate a key and IV to send to the worker
+const key = crypto.getRandomValues(new Uint8Array(32));
+const iv = crypto.getRandomValues(new Uint8Array(12));
 
-   // Create a plaintext stream to be encrypted by the worker.
-   const plaintextStream = new ReadableStream({
-     start(controller) {
-       controller.enqueue(new TextEncoder().encode('This will be encrypted '));
-       controller.enqueue(new TextEncoder().encode('in a separate thread.'));
-       controller.close();
-     },
-   });
+// Create a plaintext stream to be encrypted by the worker
+const plaintextStream = new ReadableStream({
+  start(controller) {
+    controller.enqueue(new TextEncoder().encode('This will be encrypted '));
+    controller.enqueue(new TextEncoder().encode('in a separate thread.'));
+    controller.close();
+  },
+});
 
-   // Create a TransformStream to receive the encrypted result from the worker.
-   const transformStream = new TransformStream();
+// Create a TransformStream to receive the encrypted result from the worker
+const transformStream = new TransformStream();
 
-   // Send the streams and keys to the worker. The streams are transferred,
-   // not cloned, for maximum performance.
-   worker.postMessage(
-     {
-       readable: plaintextStream,
-       writable: transformStream.writable,
-       key,
-       iv,
-     },
-     [plaintextStream, transformStream.writable],
-   );
+// Transfer the streams and keys to the worker
+worker.postMessage(
+  {
+    readable: plaintextStream,
+    writable: transformStream.writable,
+    key,
+    iv,
+  },
+  [plaintextStream, transformStream.writable],
+);
 
-   // Read the final encrypted result from the readable end of the TransformStream.
-   console.log('Reading encrypted stream from worker...');
-   const reader = transformStream.readable.getReader();
-   while (true) {
-     const { done, value } = await reader.read();
-     if (done) break;
-     // value is a Uint8Array of the encrypted data
-     console.log('Received encrypted chunk from worker:', value);
-   }
+// Read the final encrypted result from the readable end of the TransformStream
+console.log('Reading encrypted stream from worker...');
+const reader = transformStream.readable.getReader();
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  // value is a Uint8Array of the encrypted data
+  console.log('Received encrypted chunk from worker:', value);
+}
 
-   console.log('Finished reading encrypted stream on main thread.');
-   ```
+console.log('Finished reading encrypted stream on main thread.');
+```
 
 ### With detached authentication tags
 
