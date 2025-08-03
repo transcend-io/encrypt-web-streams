@@ -22,7 +22,7 @@
     "wasm/aes_gcm_stream_wasm.d.ts"
   ],
   "scripts": {
-    "build": "npm run build:rust && npm run build:js",
+    "build": "pnpm run build:rust && pnpm run build:js",
     "build:rust": "cd rust && wasm-pack build --target web --out-dir ../wasm && rm ../wasm/.gitignore",
     "build:js": "tsc --project tsconfig.json",
     "test:rust": "pnpm build && pnpm run test:rust:ci",
@@ -34,7 +34,7 @@
     "rebuild-fixtures": "tsx test/fixtures/rebuild-fixtures.ts",
     "benchmark": "web-test-runner --node-resolve --playwright --browsers chromium firefox webkit --files test/speed.test.ts",
     "clean": "rm -rf wasm/ dist/ rust/target/",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "pnpm run build",
     "lint": "pnpm run \"/^lint:.*/\"",
     "lint:prettier": "prettier --check . --log-level warn",
     "lint:eslint": "eslint .",
