@@ -250,3 +250,100 @@ it('should handle a detached auth tag', async () => {
     'Decrypted data should match unencrypted data',
   );
 });
+
+/**
+ * Export the CryptoKey as a Uint8Array, after validating it for its intended
+ * use
+ */
+async function getAesKey(
+  key: CryptoKey,
+  operation: 'encrypt' | 'decrypt',
+): Promise<Uint8Array> {
+  const errors: string[] = [];
+  if (key.algorithm.name !== 'AES-GCM') {
+    errors.push('Key is not an AES-GCM key');
+  }
+  if ((key.algorithm as AesKeyAlgorithm).length !== 256) {
+    errors.push('Key is not a 256-bit key');
+  }
+  if (!key.usages.includes(operation)) {
+    errors.push(`Key is not used for the requested operation: ${operation}`);
+  }
+  if (!key.extractable) {
+    errors.push('Key is not extractable');
+  }
+  if (errors.length > 0) {
+    throw new TypeError(
+      `The provided CryptoKey is not appropriate for the requested operation:\n - ${errors.join('\n - ')}`,
+    );
+  }
+
+  return new Uint8Array(await crypto.subtle.exportKey('raw', key));
+}
+
+it('should decrypt from WebCrypto', async () => {
+  const key = await crypto.subtle.generateKey(
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt'],
+  );
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const unencryptedData = new Uint8Array(1024).fill(1);
+
+  // Encrypt with WebCrypto, decrypt with this library
+  const encryptedData = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    unencryptedData,
+  );
+
+  const encryptedDataUint8Array = new Uint8Array(encryptedData);
+
+  const decryptionStream = createDecryptionStream(
+    await getAesKey(key, 'decrypt'),
+    iv,
+  );
+  const decryptedData = await bufferEntireStream(
+    createReadableStream(encryptedDataUint8Array).pipeThrough(decryptionStream),
+  );
+
+  assert.deepStrictEqual(
+    decryptedData,
+    unencryptedData,
+    'Decrypted data should match unencrypted data',
+  );
+});
+
+it('should encrypt data that can be decrypted by WebCrypto', async () => {
+  const key = await crypto.subtle.generateKey(
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt'],
+  );
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const unencryptedData = new Uint8Array(1024).fill(1);
+
+  // Encrypt with this library
+  const encryptionStream = createEncryptionStream(
+    await getAesKey(key, 'encrypt'),
+    iv,
+  );
+  const encryptedData = await bufferEntireStream(
+    createReadableStream(unencryptedData).pipeThrough(encryptionStream),
+  );
+
+  // Decrypt with WebCrypto
+  const decryptedData = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    encryptedData,
+  );
+
+  const decryptedDataUint8Array = new Uint8Array(decryptedData);
+
+  assert.deepStrictEqual(
+    decryptedDataUint8Array,
+    unencryptedData,
+    'WebCrypto decrypted data should match unencrypted data',
+  );
+});
