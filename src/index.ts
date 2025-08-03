@@ -8,4 +8,6 @@ export {
   init,
   createEncryptionStream,
   createDecryptionStream,
+  type EncryptionStream,
+  type DecryptionStream,
 } from './stream.js';
