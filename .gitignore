@@ -1,7 +1,7 @@
 # Rust
-rust/target/
+**/target/
 **/*.rs.bk
-rust/Cargo.lock
+**/Cargo.lock
 
 # JavaScript
 node_modules/
