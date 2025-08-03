@@ -42,6 +42,12 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Format
+        run: pnpm run format
+
+      - name: Ensure no changed files
+        run: git diff --exit-code
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:

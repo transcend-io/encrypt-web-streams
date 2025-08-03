@@ -43,10 +43,6 @@ path = "examples/bench.rs"
 name = "encrypt_and_decrypt"
 path = "examples/encrypt_and_decrypt.rs"
 
-[dependencies.ahash]
-version = "0.8"
-default-features = false
-
 [dependencies.aes]
 version = "0.8"
 features = ["zeroize"]

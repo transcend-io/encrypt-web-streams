@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "build": "pnpm run build:rust && pnpm run build:js",
-    "build:rust": "cd rust && wasm-pack build --target web --out-dir ../wasm && rm ../wasm/.gitignore",
+    "build:rust": "bash build-rust.sh",
     "build:js": "tsc --project tsconfig.json",
     "test:rust": "pnpm build && pnpm run test:rust:ci",
     "test:js": "pnpm build && pnpm run test:js:ci",
