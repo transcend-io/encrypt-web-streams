@@ -137,6 +137,9 @@ jobs:
           pnpm config set always-auth true
           pnpm config set //registry.npmjs.org/:_authToken "${{ secrets.NPM_TOKEN }}"
 
+      - name: Ensure no changed files
+        run: git diff --exit-code
+
       - name: Publish to npm
         run: pnpm publish
 
