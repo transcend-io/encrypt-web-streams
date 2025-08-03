@@ -221,14 +221,12 @@ export function createDecryptionStream(
       resolveAuthTagArgument(originalAuthTagArgument);
     }
 
-    let hasData = false;
     let streamFinished = false;
 
     const stream = new TransformStream<Uint8Array, Uint8Array>({
       transform(chunk, controller) {
         const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
         const out = dec.update(buf);
-        hasData = true;
         // Only enqueue if there's actual output
         if (out.length > 0) {
           controller.enqueue(out);
@@ -237,29 +235,27 @@ export function createDecryptionStream(
       async flush(controller) {
         let timeout: number | undefined;
         try {
-          if (hasData) {
-            // Wait for the auth tag to be set, if not already
-            timeout = setTimeout(() => {
-              console.warn(
-                'The decryption stream finished 10 seconds ago, but the authentication tag has still not been set.',
-              );
-            }, 10_000);
-            const authTagArgument = await authTagArgumentPromise;
-            clearTimeout(timeout);
+          // Wait for the auth tag to be set, if not already
+          timeout = setTimeout(() => {
+            console.warn(
+              'The decryption stream finished 10 seconds ago, but the authentication tag has still not been set.',
+            );
+          }, 10_000);
+          const authTagArgument = await authTagArgumentPromise;
+          clearTimeout(timeout);
 
-            if (authTagArgument !== undefined) {
-              // Append the auth tag as the final chunk (else assume it's already appended to the ciphertext)
-              const out = dec.update(authTagArgument);
-              if (out.length > 0) {
-                controller.enqueue(out);
-              }
+          if (authTagArgument !== undefined) {
+            // Append the auth tag as the final chunk (else assume it's already appended to the ciphertext)
+            const out = dec.update(authTagArgument);
+            if (out.length > 0) {
+              controller.enqueue(out);
             }
+          }
 
-            // Note: `finalize()` throws on auth failure
-            const last = dec.finalize();
-            if (last.length > 0) {
-              controller.enqueue(last);
-            }
+          // Note: `finalize()` throws on auth failure
+          const last = dec.finalize();
+          if (last.length > 0) {
+            controller.enqueue(last);
           }
         } finally {
           // If the stream is aborted, clear the timeout
@@ -272,16 +268,17 @@ export function createDecryptionStream(
     const decryptionStream = stream as DecryptionStream;
     decryptionStream.setAuthTag = (authTag: Uint8Array) => {
       try {
-        if (!authTagIsDeferred) {
-          throw new TypeError(
-            'Unexpected call to setAuthTag(), the `authTag` passed to `createDecryptionStream()` must be "defer" when using this library in the "defer" mode.',
-          );
-        }
         if (streamFinished) {
           throw new Error(
             'The decryption stream has already finished, so the authentication tag cannot be set.',
           );
         }
+        if (!authTagIsDeferred) {
+          throw new TypeError(
+            'Unexpected call to setAuthTag(), the `authTag` passed to `createDecryptionStream()` must be "defer" when using this library in the "defer" mode.',
+          );
+        }
+
         // Validate the authTag
         const deferredAuthTag = authTag as unknown;
         if (

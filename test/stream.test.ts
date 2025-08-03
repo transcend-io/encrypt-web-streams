@@ -281,69 +281,181 @@ async function getAesKey(
   return new Uint8Array(await crypto.subtle.exportKey('raw', key));
 }
 
-it('should decrypt from WebCrypto', async () => {
-  const key = await crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: 256 },
-    true,
-    ['encrypt', 'decrypt'],
-  );
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const unencryptedData = new Uint8Array(1024).fill(1);
+for (const length of [1, 1024, 1024 * 8 + 5]) {
+  it(`should decrypt ${length.toLocaleString()} bytes of data from WebCrypto`, async () => {
+    const key = await crypto.subtle.generateKey(
+      { name: 'AES-GCM', length: 256 },
+      true,
+      ['encrypt', 'decrypt'],
+    );
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const unencryptedData = new Uint8Array(length).fill(1);
 
-  // Encrypt with WebCrypto, decrypt with this library
-  const encryptedData = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    unencryptedData,
+    // Encrypt with WebCrypto, decrypt with this library
+    const encryptedData = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      unencryptedData,
+    );
+
+    const encryptedDataUint8Array = new Uint8Array(encryptedData);
+
+    const decryptionStream = createDecryptionStream(
+      await getAesKey(key, 'decrypt'),
+      iv,
+    );
+    const decryptedData = await bufferEntireStream(
+      createReadableStream(encryptedDataUint8Array).pipeThrough(
+        decryptionStream,
+      ),
+    );
+
+    assert.deepStrictEqual(
+      decryptedData,
+      unencryptedData,
+      'Decrypted data should match unencrypted data',
+    );
+  });
+
+  it(`should encrypt ${length.toLocaleString()} bytes of data that can be decrypted by WebCrypto`, async () => {
+    const key = await crypto.subtle.generateKey(
+      { name: 'AES-GCM', length: 256 },
+      true,
+      ['encrypt', 'decrypt'],
+    );
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const unencryptedData = new Uint8Array(length).fill(1);
+
+    // Encrypt with this library
+    const encryptionStream = createEncryptionStream(
+      await getAesKey(key, 'encrypt'),
+      iv,
+    );
+    const encryptedData = await bufferEntireStream(
+      createReadableStream(unencryptedData).pipeThrough(encryptionStream),
+    );
+
+    // Decrypt with WebCrypto
+    const decryptedData = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      encryptedData,
+    );
+
+    const decryptedDataUint8Array = new Uint8Array(decryptedData);
+
+    assert.deepStrictEqual(
+      decryptedDataUint8Array,
+      unencryptedData,
+      'WebCrypto decrypted data should match unencrypted data',
+    );
+  });
+}
+
+it('should handle a detached auth tag with an empty stream', async () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
+  const unencryptedData = new Uint8Array(0);
+
+  // Encrypt
+  const encryptionStream = createEncryptionStream(key, iv, {
+    detachAuthTag: true,
+  });
+  const readableStream = createReadableStream(unencryptedData);
+  const encryptedData = await bufferEntireStream(
+    readableStream.pipeThrough(encryptionStream),
+  );
+  assert.strictEqual(
+    encryptedData.length,
+    0,
+    'Encrypted data for an empty stream should be empty',
   );
 
-  const encryptedDataUint8Array = new Uint8Array(encryptedData);
+  // Get the auth tag after encryption is complete
+  const authTag = encryptionStream.getAuthTag();
+  assert.strictEqual(authTag.length, 16, 'Auth tag should be 16 bytes');
 
-  const decryptionStream = createDecryptionStream(
-    await getAesKey(key, 'decrypt'),
-    iv,
-  );
+  // Decrypt: Provide the auth tag directly
   const decryptedData = await bufferEntireStream(
-    createReadableStream(encryptedDataUint8Array).pipeThrough(decryptionStream),
+    createReadableStream(encryptedData).pipeThrough(
+      createDecryptionStream(key, iv, {
+        authTag,
+      }),
+    ),
   );
-
-  assert.deepStrictEqual(
-    decryptedData,
-    unencryptedData,
-    'Decrypted data should match unencrypted data',
+  assert.strictEqual(
+    decryptedData.length,
+    0,
+    'Decrypted data for an empty stream should be empty',
   );
 });
 
-it('should encrypt data that can be decrypted by WebCrypto', async () => {
-  const key = await crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: 256 },
-    true,
-    ['encrypt', 'decrypt'],
-  );
-  const iv = crypto.getRandomValues(new Uint8Array(12));
+it('should throw an error if setAuthTag() is called more than once', async () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
   const unencryptedData = new Uint8Array(1024).fill(1);
 
-  // Encrypt with this library
-  const encryptionStream = createEncryptionStream(
-    await getAesKey(key, 'encrypt'),
-    iv,
-  );
+  // Encrypt
+  const encryptionStream = createEncryptionStream(key, iv, {
+    detachAuthTag: true,
+  });
+  const readableStream = createReadableStream(unencryptedData);
   const encryptedData = await bufferEntireStream(
-    createReadableStream(unencryptedData).pipeThrough(encryptionStream),
+    readableStream.pipeThrough(encryptionStream),
   );
 
-  // Decrypt with WebCrypto
-  const decryptedData = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    encryptedData,
+  // Get the auth tag after encryption is complete
+  const authTag = encryptionStream.getAuthTag();
+  assert.strictEqual(authTag.length, 16, 'Auth tag should be 16 bytes');
+
+  // Defer the auth tag
+  const decryptionStream = createDecryptionStream(key, iv, {
+    authTag: 'defer',
+  });
+  // Start the stream, but don't wait for it to finish
+  void bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(decryptionStream),
   );
 
-  const decryptedDataUint8Array = new Uint8Array(decryptedData);
+  // Set the auth tag
+  decryptionStream.setAuthTag(authTag);
+  assert.throws(() => {
+    // Set the auth tag again
+    decryptionStream.setAuthTag(authTag);
+  }, /Unexpected call to setAuthTag/);
+});
 
-  assert.deepStrictEqual(
-    decryptedDataUint8Array,
-    unencryptedData,
-    'WebCrypto decrypted data should match unencrypted data',
+it('should throw an error if setAuthTag() is called after the stream is finished', async () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
+  const unencryptedData = new Uint8Array(1024).fill(1);
+
+  // Encrypt
+  const encryptionStream = createEncryptionStream(key, iv, {
+    detachAuthTag: true,
+  });
+  const readableStream = createReadableStream(unencryptedData);
+  const encryptedData = await bufferEntireStream(
+    readableStream.pipeThrough(encryptionStream),
   );
+
+  // Get the auth tag after encryption is complete
+  const authTag = encryptionStream.getAuthTag();
+  assert.strictEqual(authTag.length, 16, 'Auth tag should be 16 bytes');
+
+  // Defer the auth tag
+  const decryptionStream = createDecryptionStream(key, iv, {
+    authTag: 'defer',
+  });
+  // Start the stream, but don't wait for it to finish
+  const bufferPromise = bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(decryptionStream),
+  );
+
+  // Set the auth tag
+  decryptionStream.setAuthTag(authTag);
+  await bufferPromise;
+  assert.throws(() => {
+    decryptionStream.setAuthTag(authTag);
+  }, /The decryption stream has already finished/);
 });

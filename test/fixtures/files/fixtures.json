@@ -1,5 +1,33 @@
 [
   {
+    "filePrefix": "0byte",
+    "encryptedPathname": "/files/encrypted/0byte.dat.enc",
+    "unencryptedPathname": "/files/unencrypted/0byte.dat",
+    "encryptedSize": 0,
+    "unencryptedSize": 0,
+    "decryptionOptions": {
+      "key": "vScyqmJKqGl73mJkuwm/zPBQk0wct9eQ5wPE8laGcWM=",
+      "iv": "6lNU+2vxJw6SFgse",
+      "authTag": "EZVDe32y6r8RkSE5AfplNw=="
+    },
+    "unencryptedChecksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "encryptedChecksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "filePrefix": "1byte",
+    "encryptedPathname": "/files/encrypted/1byte.dat.enc",
+    "unencryptedPathname": "/files/unencrypted/1byte.dat",
+    "encryptedSize": 1,
+    "unencryptedSize": 1,
+    "decryptionOptions": {
+      "key": "vScyqmJKqGl73mJkuwm/zPBQk0wct9eQ5wPE8laGcWM=",
+      "iv": "6lNU+2vxJw6SFgse",
+      "authTag": "tcjp+8Lm6102TKYIO8pvHA=="
+    },
+    "unencryptedChecksum": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a",
+    "encryptedChecksum": "83891d7fe85c33e52c8b4e5814c92fb6a3b9467299200538a6babaa8b452d879"
+  },
+  {
     "filePrefix": "file_example_JSON_1kb",
     "encryptedPathname": "/files/encrypted/file_example_JSON_1kb.json.enc",
     "unencryptedPathname": "/files/unencrypted/file_example_JSON_1kb.json",

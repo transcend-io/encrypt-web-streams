@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ###
 # This script is used to test fixtures.
