@@ -36,13 +36,16 @@ jobs:
             ./rust/patches/aes-gcm-stream -> target
 
       - name: Build
-        run: pnpm build
+        run: pnpm run build
 
       - name: Format
         run: pnpm run format
 
       - name: Ensure no changed files
         run: git diff --exit-code
+
+      - name: Publint
+        run: pnpm dlx publint
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
