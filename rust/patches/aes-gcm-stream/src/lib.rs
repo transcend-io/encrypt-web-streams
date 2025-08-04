@@ -159,7 +159,7 @@ fn test128() {
             decryptor.init_adata(aad);
         }
         let mut plaintext1 = decryptor.update(ciphertext.as_slice());
-        let plaintext2 = decryptor.finalize().expect("decryptor decrypt");
+        let plaintext2 = decryptor.finalize(None).expect("decryptor decrypt");
         plaintext1.extend_from_slice(&plaintext2);
         assert_eq!(plaintext, plaintext1.as_slice());
 
@@ -235,7 +235,7 @@ fn test192() {
             decryptor.init_adata(aad);
         }
         let mut plaintext1 = decryptor.update(ciphertext.as_slice());
-        let plaintext2 = decryptor.finalize().expect("decryptor decrypt");
+        let plaintext2 = decryptor.finalize(None).expect("decryptor decrypt");
         plaintext1.extend_from_slice(&plaintext2);
         assert_eq!(plaintext, plaintext1.as_slice());
 
@@ -299,7 +299,7 @@ fn test256() {
             decryptor.init_adata(aad);
         }
         let mut plaintext1 = decryptor.update(ciphertext.as_slice());
-        let plaintext2 = decryptor.finalize().expect("decryptor decrypt");
+        let plaintext2 = decryptor.finalize(None).expect("decryptor decrypt");
         plaintext1.extend_from_slice(&plaintext2);
         assert_eq!(plaintext, plaintext1.as_slice());
 
@@ -348,7 +348,7 @@ fn test256_stream() {
         plaintext1.extend_from_slice(decryptor.update(
             &[ciphertext.as_slice()[i]]).as_slice());
     }
-    let plaintext2 = decryptor.finalize().expect("decryptor decrypt");
+    let plaintext2 = decryptor.finalize(None).expect("decryptor decrypt");
     plaintext1.extend_from_slice(&plaintext2);
     assert_eq!(plaintext, plaintext1.as_slice());
 
@@ -460,7 +460,7 @@ fn test125_ab_nonce() {
     gcm_stream.init_adata(&aad[..]);
     let mut first_block = gcm_stream.update(&ciphertext);
     let second_block = gcm_stream.update(&tag);
-    let final_block = gcm_stream.finalize().unwrap();
+    let final_block = gcm_stream.finalize(None).unwrap();
 
     first_block.extend_from_slice(&second_block);
     first_block.extend_from_slice(&final_block);
