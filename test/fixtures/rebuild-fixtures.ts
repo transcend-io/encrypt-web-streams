@@ -13,6 +13,10 @@ const thisDirname = path.dirname(new URL(import.meta.url).pathname);
 
 import type { Fixture } from './types.js';
 
+const bigFixturesEnabled = ['include', 'only'].includes(
+  process.env['FF_BIG_FIXTURES'] ?? 'skip',
+);
+
 /** We can't check these into git, so we generate them here. */
 const bigGeneratedFiles: {
   filename: `big${number}${'MB' | 'GB'}.dat`;
@@ -24,40 +28,42 @@ const bigGeneratedFiles: {
     filename: 'big800MB.dat',
     size: 800 * 1024 * 1024,
     seed: 'foo',
-    enabled: true,
+    enabled: bigFixturesEnabled,
   },
   {
     filename: 'big6GB.dat',
     size: 6 * 1024 * 1024 * 1024,
     seed: 'bar',
-    enabled: true, // switch to true to test a 6GB file
+    enabled: bigFixturesEnabled,
   },
 ];
 
 // Rebuild the files.js file to use the local server
 async function main(): Promise<void> {
-  // Generate the big files that aren't checked into git
-  console.group("Generating big files that aren't checked into git");
-  for (const bigGeneratedFile of bigGeneratedFiles) {
-    await rm(
-      path.join(thisDirname, '/files/unencrypted', bigGeneratedFile.filename),
-      { force: true },
-    );
-    if (!bigGeneratedFile.enabled) {
-      continue;
+  if (bigFixturesEnabled) {
+    // Generate the big files that aren't checked into git
+    console.group("Generating big files that aren't checked into git");
+    for (const bigGeneratedFile of bigGeneratedFiles) {
+      await rm(
+        path.join(thisDirname, '/files/unencrypted', bigGeneratedFile.filename),
+        { force: true },
+      );
+      if (!bigGeneratedFile.enabled) {
+        continue;
+      }
+      const filePath = path.join(
+        thisDirname,
+        '/files/unencrypted',
+        bigGeneratedFile.filename,
+      );
+      await generatePatternFile(
+        filePath,
+        bigGeneratedFile.size,
+        bigGeneratedFile.seed,
+      );
     }
-    const filePath = path.join(
-      thisDirname,
-      '/files/unencrypted',
-      bigGeneratedFile.filename,
-    );
-    await generatePatternFile(
-      filePath,
-      bigGeneratedFile.size,
-      bigGeneratedFile.seed,
-    );
+    console.groupEnd();
   }
-  console.groupEnd();
 
   // Build fixtures
   let fixtures: Fixture[] = [];

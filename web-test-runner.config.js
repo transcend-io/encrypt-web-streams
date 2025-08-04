@@ -4,6 +4,11 @@ import { esbuildPlugin } from '@web/dev-server-esbuild';
 /** The timeout for all tests in milliseconds */
 const TIMEOUT_MS = 10 * 60 * 1000;
 
+/** @type {'skip' | 'include' | 'only'} */
+// @ts-expect-error - TODO: need to update tsconfig to allow @types/node in config files
+// eslint-disable-next-line no-undef
+const FF_BIG_FIXTURES = process.env['FF_BIG_FIXTURES'] ?? 'skip';
+
 /**
  * Pass environment variables to the test environment.
  *
@@ -11,7 +16,7 @@ const TIMEOUT_MS = 10 * 60 * 1000;
  */
 const environment = {
   /** @type {'include' | 'skip' | 'only'} */
-  FF_BIG_FIXTURES: 'skip',
+  FF_BIG_FIXTURES: FF_BIG_FIXTURES,
 };
 
 /** @type {import('@web/test-runner').TestRunnerConfig} */
