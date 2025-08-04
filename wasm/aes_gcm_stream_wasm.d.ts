@@ -11,7 +11,7 @@ export class Decryptor {
   /**
    * Finalize: checks tag and returns any remaining plaintext or errors.
    */
-  finalize(): Uint8Array;
+  finalize(dangerously_ignore_auth_tag?: boolean | null): Uint8Array;
 }
 /**
  * Streaming AES-256-GCM encryptor.
@@ -49,7 +49,7 @@ export interface InitOutput {
   readonly decryptor_new: (a: number, b: number, c: number, d: number) => [number, number, number];
   readonly decryptor_init_adata: (a: number, b: number, c: number) => void;
   readonly decryptor_update: (a: number, b: number, c: number) => [number, number];
-  readonly decryptor_finalize: (a: number) => [number, number, number, number];
+  readonly decryptor_finalize: (a: number, b: number) => [number, number, number, number];
   readonly __wbindgen_export_0: WebAssembly.Table;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __externref_table_dealloc: (a: number) => void;

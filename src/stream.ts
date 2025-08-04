@@ -181,6 +181,7 @@ export function createDecryptionStream(
   {
     additionalData,
     authTag: originalAuthTagArgument,
+    __dangerouslyIgnoreAuthTag = false,
   }: {
     /** Optional additional authenticated data */
     additionalData?: Uint8Array;
@@ -195,6 +196,8 @@ export function createDecryptionStream(
      * @see {EncryptionStream.getAuthTag}
      */
     authTag?: Uint8Array | 'defer';
+    /** If `true`, the authentication tag will not be verified. */
+    __dangerouslyIgnoreAuthTag?: boolean;
   } = {},
 ): DecryptionStream {
   try {
@@ -229,6 +232,12 @@ export function createDecryptionStream(
       authTagIsDeferred = true;
     } else {
       resolveAuthTag(originalAuthTagArgument);
+    }
+
+    if (__dangerouslyIgnoreAuthTag) {
+      console.warn(
+        '`__dangerouslyIgnoreAuthTag` was provided. This is dangerous and should only be used for testing.',
+      );
     }
 
     let streamFinished = false;
@@ -266,9 +275,17 @@ export function createDecryptionStream(
             }
           }
 
+          if (__dangerouslyIgnoreAuthTag && authTag === undefined) {
+            console.warn(
+              '`__dangerouslyIgnoreAuthTag` was provided, but the authentication tag was not set.',
+              'This will assume there is an authentication tag appended to the ciphertext.',
+              'If there is not, you will receive fewer bytes than expected, and you should pass a mock authTag to the stream.',
+            );
+          }
+
           // Note: `finalize()` throws on failure of the authentication tag
           try {
-            const last = dec.finalize();
+            const last = dec.finalize(__dangerouslyIgnoreAuthTag);
             if (last.length > 0) {
               controller.enqueue(last);
             }

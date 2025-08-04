@@ -46,7 +46,7 @@ pub fn aes_128_gcm_decrypt(key: &[u8], nonce: &[u8], message: &[u8]) -> Result<V
     let mut key: [u8; 16] = key.try_into().map_err(|_| format!("Bad key length"))?;
     let mut gcm_stream = Aes128GcmStreamDecryptor::new(key, nonce);
     let mut first_block = gcm_stream.update(message);
-    let final_block = gcm_stream.finalize()?;
+    let final_block = gcm_stream.finalize(None)?;
     first_block.extend_from_slice(&final_block);
     key.zeroize();
     Ok(first_block)
@@ -56,7 +56,7 @@ pub fn aes_192_gcm_decrypt(key: &[u8], nonce: &[u8], message: &[u8]) -> Result<V
     let mut key: [u8; 24] = key.try_into().map_err(|_| format!("Bad key length"))?;
     let mut gcm_stream = Aes192GcmStreamDecryptor::new(key, nonce);
     let mut first_block = gcm_stream.update(message);
-    let final_block = gcm_stream.finalize()?;
+    let final_block = gcm_stream.finalize(None)?;
     first_block.extend_from_slice(&final_block);
     key.zeroize();
     Ok(first_block)
@@ -66,7 +66,7 @@ pub fn aes_256_gcm_decrypt(key: &[u8], nonce: &[u8], message: &[u8]) -> Result<V
     let mut key: [u8; 32] = key.try_into().map_err(|_| format!("Bad key length"))?;
     let mut gcm_stream = Aes256GcmStreamDecryptor::new(key, nonce);
     let mut first_block = gcm_stream.update(message);
-    let final_block = gcm_stream.finalize()?;
+    let final_block = gcm_stream.finalize(None)?;
     first_block.extend_from_slice(&final_block);
     key.zeroize();
     Ok(first_block)

@@ -281,6 +281,159 @@ it('should handle a detached auth tag', async () => {
   );
 });
 
+it('should fail if the auth tag is invalid', async () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
+  const unencryptedData = new Uint8Array(1024).fill(1);
+
+  // Encrypt
+  const encryptionStream = createEncryptionStream(key, iv, {
+    detachAuthTag: true,
+  });
+  const readableStream = createReadableStream(unencryptedData);
+  const encryptedData = await bufferEntireStream(
+    readableStream.pipeThrough(encryptionStream),
+  );
+
+  // Get the auth tag after encryption is complete
+  const badAuthTag = new Uint8Array(16).fill(1);
+
+  try {
+    // Decrypt 1: Provide the auth tag directly
+    await bufferEntireStream(
+      createReadableStream(encryptedData).pipeThrough(
+        createDecryptionStream(key, iv, {
+          authTag: badAuthTag,
+        }),
+      ),
+    );
+  } catch (error) {
+    assert.instanceOf(error, Error, 'Error should be an Error instance');
+    assert.match(
+      error.message,
+      /Failed to finalize decryption stream/,
+      'Error message should indicate finalization failure',
+    );
+  }
+
+  // Decrypt 2: Defer the auth tag
+  const decryptionStream2 = createDecryptionStream(key, iv, {
+    authTag: 'defer',
+  });
+  const decryptedDataPromise = bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(decryptionStream2),
+  );
+  decryptionStream2.setAuthTag(badAuthTag);
+  try {
+    await decryptedDataPromise;
+  } catch (error) {
+    assert.instanceOf(error, Error, 'Error should be an Error instance');
+    assert.match(
+      error.message,
+      /Failed to finalize decryption stream/,
+      'Error message should indicate finalization failure',
+    );
+  }
+
+  // Decrypt 3: Defer the auth tag for a long time
+  const decryptionStream3 = createDecryptionStream(key, iv, {
+    authTag: 'defer',
+  });
+  const decryptedDataPromise3 = bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(decryptionStream3),
+  );
+  setTimeout(() => {
+    decryptionStream3.setAuthTag(badAuthTag);
+  }, 10_000);
+  try {
+    await decryptedDataPromise3;
+  } catch (error) {
+    assert.instanceOf(error, Error, 'Error should be an Error instance');
+    assert.match(
+      error.message,
+      /Failed to finalize decryption stream/,
+      'Error message should indicate finalization failure',
+    );
+  }
+});
+
+it('should handle __dangerouslyIgnoreAuthTag', async () => {
+  const key = new Uint8Array(32).fill(1);
+  const iv = new Uint8Array(12).fill(2);
+  const unencryptedData = new Uint8Array(1024).fill(1);
+
+  // Encrypt
+  const encryptionStream = createEncryptionStream(key, iv, {
+    detachAuthTag: true,
+  });
+  const readableStream = createReadableStream(unencryptedData);
+  const encryptedData = await bufferEntireStream(
+    readableStream.pipeThrough(encryptionStream),
+  );
+
+  // Get the auth tag after encryption is complete
+  const badAuthTag = new Uint8Array(16).fill(1);
+
+  // Decrypt 1: Provide the auth tag directly
+  const decryptionStream1 = createDecryptionStream(key, iv, {
+    authTag: badAuthTag,
+    __dangerouslyIgnoreAuthTag: true,
+  });
+  const decryptedData1 = await bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(decryptionStream1),
+  );
+  assert.strictEqual(
+    decryptedData1.length,
+    unencryptedData.length,
+    'Decrypted data should have same length as unencrypted data',
+  );
+  assert.deepStrictEqual(
+    decryptedData1,
+    unencryptedData,
+    'Decrypted data should match unencrypted data',
+  );
+
+  // Decrypt 2: Defer the auth tag
+  const decryptionStream2 = createDecryptionStream(key, iv, {
+    authTag: 'defer',
+    __dangerouslyIgnoreAuthTag: true,
+  });
+  const decryptedDataPromise = bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(decryptionStream2),
+  );
+
+  decryptionStream2.setAuthTag(badAuthTag);
+  const decryptedData2 = await decryptedDataPromise;
+  assert.strictEqual(
+    decryptedData2.length,
+    unencryptedData.length,
+    'Decrypted data should have same length as unencrypted data',
+  );
+  assert.deepStrictEqual(
+    decryptedData2,
+    unencryptedData,
+    'Decrypted data should match unencrypted data',
+  );
+
+  // Decrypt 3: Do not provide an auth tag (assume it's appended to the ciphertext)
+  const decryptionStream3 = createDecryptionStream(key, iv, {
+    __dangerouslyIgnoreAuthTag: true,
+  });
+  const decryptedData3 = await bufferEntireStream(
+    createReadableStream(encryptedData).pipeThrough(decryptionStream3),
+  );
+  assert.strictEqual(
+    decryptedData3.length,
+    unencryptedData.length - 16,
+    'Decrypted data should have same length as unencrypted data',
+  );
+  assert.deepStrictEqual(
+    decryptedData3,
+    unencryptedData.subarray(0, -16),
+    'Decrypted data should match unencrypted data',
+  );
+});
+
 /**
  * Export the CryptoKey as a Uint8Array, after validating it for its intended
  * use

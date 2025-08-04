@@ -80,8 +80,8 @@ impl Decryptor {
 
     /// Finalize: checks tag and returns any remaining plaintext or errors.
     #[wasm_bindgen]
-    pub fn finalize(&mut self) -> Result<Vec<u8>, JsValue> {
-        self.inner.finalize().map_err(|e| JsValue::from_str(&e))
+    pub fn finalize(&mut self, dangerously_ignore_auth_tag: Option<bool>) -> Result<Vec<u8>, JsValue> {
+        self.inner.finalize(dangerously_ignore_auth_tag).map_err(|e| JsValue::from_str(&e))
     }
 }
 

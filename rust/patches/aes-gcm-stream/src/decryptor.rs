@@ -88,7 +88,8 @@ macro_rules! define_aes_gcm_stream_decryptor_impl {
                 plaintext_message
             }
 
-            pub fn finalize(&mut self) -> Result<Vec<u8>, String> {
+            pub fn finalize(&mut self, dangerously_ignore_auth_tag: Option<bool>) -> Result<Vec<u8>, String> {
+                let dangerously_ignore_auth_tag = dangerously_ignore_auth_tag.unwrap_or(false);
                 let mut plaintext_message = Vec::with_capacity(16);
                 let message_buffer_len = self.message_buffer.len();
                 if message_buffer_len > 16 {
@@ -123,11 +124,16 @@ macro_rules! define_aes_gcm_stream_decryptor_impl {
                 let message_tag = &self.message_buffer[message_buffer_len - 16..];
 
                 if message_tag != tag.as_slice() {
-                    Err(format!(
-                        "Tag mismatch, expected: {:2x}, actual: {:2x}",
-                        u8to128(&tag),
-                        u8to128(message_tag)
-                    ))
+                    if dangerously_ignore_auth_tag {
+                        println!("WARNING: dangerously_ignore_auth_tag was provided: bypassing verification and returning plaintext");
+                        Ok(plaintext_message)
+                    } else {
+                        Err(format!(
+                            "Tag mismatch, expected: {:2x}, actual: {:2x}",
+                            u8to128(&tag),
+                            u8to128(message_tag)
+                        ))
+                    }
                 } else {
                     Ok(plaintext_message)
                 }

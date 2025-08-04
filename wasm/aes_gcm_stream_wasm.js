@@ -38,6 +38,10 @@ function getArrayU8FromWasm0(ptr, len) {
     return getUint8ArrayMemory0().subarray(ptr / 1, ptr / 1 + len);
 }
 
+function isLikeNone(x) {
+    return x === undefined || x === null;
+}
+
 const DecryptorFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_decryptor_free(ptr >>> 0, 1));
@@ -96,10 +100,11 @@ export class Decryptor {
     }
     /**
      * Finalize: checks tag and returns any remaining plaintext or errors.
+     * @param {boolean | null} [dangerously_ignore_auth_tag]
      * @returns {Uint8Array}
      */
-    finalize() {
-        const ret = wasm.decryptor_finalize(this.__wbg_ptr);
+    finalize(dangerously_ignore_auth_tag) {
+        const ret = wasm.decryptor_finalize(this.__wbg_ptr, isLikeNone(dangerously_ignore_auth_tag) ? 0xFFFFFF : dangerously_ignore_auth_tag ? 1 : 0);
         if (ret[3]) {
             throw takeFromExternrefTable0(ret[2]);
         }
