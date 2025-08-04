@@ -22,7 +22,7 @@ fn main() {
 
     let mut plaintext = vec![];
     plaintext.extend_from_slice(decryptor.update(&ciphertext).as_slice());
-    plaintext.extend_from_slice(&decryptor.finalize().expect("decrypt error"));
+    plaintext.extend_from_slice(&decryptor.finalize(None).expect("decrypt error"));
 
     println!("Plaintext: {}", String::from_utf8_lossy(&plaintext));
     key.zeroize();

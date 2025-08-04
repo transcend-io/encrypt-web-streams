@@ -43,7 +43,7 @@ fn test_aes256_encrypted_and_decrypt(m: &mut [u8]) {
 
     let mut decryptor = Aes256GcmStreamDecryptor::new(key, &nonce);
     let mut decrypted = decryptor.update(&encrypted);
-    let last_block = decryptor.finalize().expect("decrypt failed");
+    let last_block = decryptor.finalize(None).expect("decrypt failed");
     decrypted.extend_from_slice(&last_block);
     assert_eq!(m, decrypted.as_slice());
 }
