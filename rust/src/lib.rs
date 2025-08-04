@@ -125,7 +125,7 @@ mod tests {
         }
 
         // Finalize - the tag is already in the message buffer
-        match decryptor.finalize(false) {
+        match decryptor.finalize(None) {
             Ok(last) => {
                 decrypted_data.extend_from_slice(&last);
                 println!("Successfully decrypted {} bytes", decrypted_data.len());
@@ -187,7 +187,7 @@ mod tests {
         }
 
         // Finalize - the tag is already in the message buffer
-        match decryptor.finalize(false) {
+        match decryptor.finalize(None) {
             Ok(last) => {
                 decrypted_data.extend_from_slice(&last);
                 println!("Successfully decrypted {} bytes", decrypted_data.len());
