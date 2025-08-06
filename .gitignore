@@ -6,7 +6,11 @@
 # JavaScript
 node_modules/
 dist/
+
+# TypeScript
 .tsbuildinfo
+*.tsbuildinfo
+build/
 
 # WebAssembly
 wasm/*.wasm

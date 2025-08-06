@@ -20,7 +20,7 @@
   "scripts": {
     "build": "pnpm run build:rust && pnpm run build:js",
     "build:rust": "bash build-rust.sh",
-    "build:js": "tsc --project tsconfig.json",
+    "build:js": "tsc --build --force",
     "test:rust": "pnpm run test:rust:ci",
     "test:js": "pnpm build && pnpm run test:js:ci",
     "test:fixtures": "pnpm build && pnpm run test:fixtures:ci",
@@ -34,9 +34,7 @@
     "lint": "pnpm run \"/^lint:.*/\"",
     "lint:prettier": "prettier --check . --log-level warn",
     "lint:eslint": "eslint .",
-    "lint:types": "tsc --noEmit",
-    "lint:types:tests": "tsc --noEmit --project test/tsconfig.json",
-    "lint:types:fixtures": "tsc --noEmit --project test/fixtures/tsconfig.json",
+    "lint:types": "tsc --build",
     "format": "pnpm exec doctoc README.md --maxlevel 2 && prettier --write ."
   },
   "devDependencies": {

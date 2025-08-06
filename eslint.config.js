@@ -12,9 +12,8 @@ const eslintConfig = tseslint.config(
   {
     languageOptions: {
       parserOptions: {
-        projectService: {
-          allowDefaultProject: ['*.config.js'],
-        },
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     linterOptions: {
@@ -22,7 +21,12 @@ const eslintConfig = tseslint.config(
     },
   },
   {
-    ignores: ['dist', 'wasm', 'rust', 'hidden', 'coverage'],
+    rules: {
+      'no-undef': 'off', // Everything is checked by TypeScript; this is recommended by typescript-eslint.
+    },
+  },
+  {
+    ignores: ['dist', 'build', 'coverage', 'wasm', 'rust', 'hidden'],
   },
 );
 
