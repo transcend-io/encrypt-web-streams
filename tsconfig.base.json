@@ -5,9 +5,9 @@
     "baseUrl": ".",
 
     "composite": true,
-    "emitDeclarationOnly": true,
-    "outDir": "build",
     "incremental": true,
+    "emitDeclarationOnly": true,
+    "outDir": ".build",
 
     "target": "ES2022",
     "module": "NodeNext",
@@ -35,7 +35,7 @@
   },
   "exclude": [
     "dist",
-    "build",
+    ".build",
     "node_modules",
     "coverage",
     // Generated fixture files, excluding the fixtures.json file

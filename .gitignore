@@ -10,7 +10,7 @@ dist/
 # TypeScript
 .tsbuildinfo
 *.tsbuildinfo
-build/
+.build/
 
 # WebAssembly
 wasm/*.wasm

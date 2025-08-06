@@ -1,10 +1,11 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
+    "types": [], // no node globals
     "rootDir": "./src",
-    "emitDeclarationOnly": false,
-    "types": [] // no node globals
+    // Publishing
+    "outDir": "dist",
+    "emitDeclarationOnly": false
   },
   "include": ["src/**/*"]
 }
