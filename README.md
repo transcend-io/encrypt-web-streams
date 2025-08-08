@@ -452,7 +452,7 @@ On M3 Pro, decrypting a 6.3GB file:
 - in Webkit (i.e., Safari), this implementation decrypts at 60 MB/s with 3 MB of memory usage.
 - in Firefox, this implementation decrypts at 4 MB/s with 3 MB of memory usage.
 
-Firefox is slower on M3 Pro. This is likely because Chrome and Safari ship as native AArch64 binaries, whereas an x86-only Firefox (as of August 2, 2025) will run under Rosetta 2, causing emulation overhead.
+Firefox is slower on M3 Pro. It's not yet clear why, but it's likely a difference in the Wasm implementation.
 
 Run `pnpm benchmark` to see the speed of the implementation and compare it against WebCrypto (but note that WebCrypto cannot stream, so it's not a perfect comparison).
 

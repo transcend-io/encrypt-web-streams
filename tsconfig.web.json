@@ -2,8 +2,8 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "types": [], // no node globals
-    "rootDir": "./src",
     // Publishing
+    "rootDir": "./src",
     "outDir": "dist",
     "emitDeclarationOnly": false
   },
