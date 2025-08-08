@@ -235,8 +235,8 @@ export function createDecryptionStream(
     }
 
     if (__dangerouslyIgnoreAuthTag) {
-      console.warn(
-        '`__dangerouslyIgnoreAuthTag` was provided. This is dangerous and should only be used for testing.',
+      console.debug(
+        '`__dangerouslyIgnoreAuthTag` was provided. The ciphertext will not be authenticated.',
       );
     }
 
@@ -276,10 +276,10 @@ export function createDecryptionStream(
           }
 
           if (__dangerouslyIgnoreAuthTag && authTag === undefined) {
-            console.warn(
+            console.debug(
               '`__dangerouslyIgnoreAuthTag` was provided, but the authentication tag was not set.',
               'This will assume there is an authentication tag appended to the ciphertext.',
-              'If there is not, you will receive fewer bytes than expected, and you should pass a mock authTag to the stream.',
+              'If it is not, you will receive fewer bytes than expected, and you should pass a mock authTag to the stream.',
             );
           }
 
