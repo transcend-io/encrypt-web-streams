@@ -98,7 +98,7 @@ jobs:
 
       - name: Install Playwright browsers
         if: ${{ matrix.needs_playwright }}
-        run: pnpm dlx playwright install --with-deps
+        run: pnpm exec playwright install --with-deps
 
       - name: Rebuild fixtures
         if: ${{ matrix.needs_fixtures }}

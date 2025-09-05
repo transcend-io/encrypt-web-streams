@@ -88,5 +88,8 @@
     "encryption",
     "e2ee",
     "crypto"
-  ]
+  ],
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
 }
