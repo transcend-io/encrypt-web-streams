@@ -17,7 +17,7 @@ jobs:
         uses: pnpm/action-setup@v4
 
       - name: Setup Node.js from .nvmrc
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -80,7 +80,7 @@ jobs:
         uses: pnpm/action-setup@v4
 
       - name: Setup Node.js from .nvmrc
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -117,6 +117,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: read
       packages: write
     needs:
@@ -129,6 +130,18 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
+      - name: Setup Node.js for npm trusted publishing
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          registry-url: 'https://registry.npmjs.org'
+
+      # See: https://docs.npmjs.com/trusted-publishers
+      # See: https://github.com/actions/setup-node/issues/1445
+      - name: Set npm to version that supports trusted publishers
+        run: npm install -g npm@11.5.1
+        shell: bash
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -138,13 +151,10 @@ jobs:
       - name: Ensure no changed files
         run: git diff --exit-code
 
-      - name: Configure npm authentication
-        run: |
-          pnpm config set always-auth true
-          pnpm config set //registry.npmjs.org/:_authToken "${{ secrets.NPM_TOKEN }}"
-
       - name: Publish to npm
         run: pnpm publish
+        env:
+          NODE_AUTH_TOKEN: ""
 
       - name: Configure GitHub Packages authentication
         run: |
