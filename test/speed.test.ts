@@ -42,7 +42,7 @@ function makeReadableStream(): ReadableStream<Uint8Array> {
 // Benchmark
 const bench = new Bench({ name: 'simple benchmark', time: 100 });
 bench
-  .add('aes_gcm_stream_wasm', async () => {
+  .add('encrypt-web-streams', async () => {
     // Streams
     const readableStream = makeReadableStream();
     const encryptionStream = createEncryptionStream(key, iv);
