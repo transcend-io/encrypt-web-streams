@@ -129,7 +129,7 @@ macro_rules! define_aes_gcm_stream_decryptor_impl {
                         Ok(plaintext_message)
                     } else {
                         Err(format!(
-                            "Tag mismatch, expected: {:2x}, actual: {:2x}",
+                            "Tag mismatch, expected: {:032x}, actual: {:032x}",
                             u8to128(&tag),
                             u8to128(message_tag)
                         ))
