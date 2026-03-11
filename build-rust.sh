@@ -11,8 +11,8 @@ export RUSTFLAGS="--remap-path-prefix=$PWD=. \
 --remap-path-prefix=$HOME/.cargo/registry=/cargo/registry \
 --remap-path-prefix=$HOME/.rustup=/rustup"
 
-# Build the wasm package
-wasm-pack build --target web --out-dir ../wasm
+# Build the wasm package with the checked-in lockfile.
+wasm-pack build --target web --out-dir ../wasm -- --locked
 
 # Clean up gitignore file created by wasm-pack
 rm ../wasm/.gitignore
