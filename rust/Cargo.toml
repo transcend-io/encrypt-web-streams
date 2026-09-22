@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 # Streaming AES-GCM implementation (patched below)
 aes-gcm-stream = "0.2.4"
 # Interface between Wasm and JS
-wasm-bindgen = "0.2.101"
+wasm-bindgen = "=0.2.101"
 
 [patch.crates-io]
 aes-gcm-stream = { path = "./patches/aes-gcm-stream" }
