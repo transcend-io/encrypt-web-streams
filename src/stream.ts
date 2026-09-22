@@ -1,6 +1,7 @@
 import initWasm, {
   Decryptor,
   Encryptor,
+  type InitInput,
   type InitOutput,
 } from '../wasm/aes_gcm_stream_wasm.js';
 import { promiseWithResolvers } from './helpers.js';
@@ -10,13 +11,27 @@ const AUTH_TAG_LENGTH = 16;
 
 let _wasmReady: InitOutput | undefined;
 
+/** Default wasm asset URL; matches the generated loader's own default. */
+export const WASM_URL = new URL(
+  '../wasm/aes_gcm_stream_wasm_bg.wasm',
+  import.meta.url,
+).href;
+
 /**
  * Initialize the WebAssembly module.
  *
+ * @param options - Optional wasm module source (URL, fetch Response, bytes,
+ *   etc.) forwarded to the generated loader. Omit to load from `WASM_URL`. Uses
+ *   `module_or_path` to match wasm-bindgen's object-form init API.
  * @returns A promise that resolves when the Wasm module has been initialized.
  */
-export async function init(): Promise<void> {
-  _wasmReady ??= await initWasm();
+export async function init(options?: {
+  /** Custom wasm module source to instantiate instead of `WASM_URL`. */
+  module_or_path: InitInput | Promise<InitInput>;
+}): Promise<void> {
+  // Pass the object form through unchanged. Positional InitInput is deprecated
+  // (console.warn); any other key is silently ignored in favour of WASM_URL.
+  _wasmReady ??= await initWasm(options);
 }
 
 /**
