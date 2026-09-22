@@ -34,10 +34,8 @@ export async function init(
  * A `TransformStream` with an additional method to retrieve the authentication
  * tag.
  */
-export interface EncryptionStream extends TransformStream<
-  Uint8Array,
-  Uint8Array
-> {
+export interface EncryptionStream
+  extends TransformStream<Uint8Array, Uint8Array> {
   /**
    * Get the authentication tag.
    *
@@ -167,10 +165,8 @@ export function createEncryptionStream(
 }
 
 /** A `TransformStream` with an additional method to set the authentication tag. */
-export interface DecryptionStream extends TransformStream<
-  Uint8Array,
-  Uint8Array
-> {
+export interface DecryptionStream
+  extends TransformStream<Uint8Array, Uint8Array> {
   /** Set the authentication tag. */
   setAuthTag(authTag: Uint8Array): void;
 }
