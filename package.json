@@ -1,6 +1,6 @@
 {
   "name": "@transcend-io/encrypt-web-streams",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "WebAssembly-powered streaming AES-256-GCM encryption and decryption with a web-native TransformStream API.",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,6 +1,7 @@
 import initWasm, {
   Decryptor,
   Encryptor,
+  type InitInput,
   type InitOutput,
 } from '../wasm/aes_gcm_stream_wasm.js';
 import { promiseWithResolvers } from './helpers.js';
@@ -10,21 +11,33 @@ const AUTH_TAG_LENGTH = 16;
 
 let _wasmReady: InitOutput | undefined;
 
+/** Default wasm asset URL resolved relative to the generated wasm loader. */
+export const WASM_URL = new URL(
+  'aes_gcm_stream_wasm_bg.wasm',
+  new URL('../wasm/aes_gcm_stream_wasm.js', import.meta.url),
+).href;
+
 /**
  * Initialize the WebAssembly module.
  *
+ * @param moduleOrPath - Optional wasm module source passed through to the
+ *   generated loader (URL, fetch Response, bytes, etc.).
  * @returns A promise that resolves when the Wasm module has been initialized.
  */
-export async function init(): Promise<void> {
-  _wasmReady ??= await initWasm();
+export async function init(
+  moduleOrPath?: InitInput | Promise<InitInput>,
+): Promise<void> {
+  _wasmReady ??= await initWasm(moduleOrPath);
 }
 
 /**
  * A `TransformStream` with an additional method to retrieve the authentication
  * tag.
  */
-export interface EncryptionStream
-  extends TransformStream<Uint8Array, Uint8Array> {
+export interface EncryptionStream extends TransformStream<
+  Uint8Array,
+  Uint8Array
+> {
   /**
    * Get the authentication tag.
    *
@@ -154,8 +167,10 @@ export function createEncryptionStream(
 }
 
 /** A `TransformStream` with an additional method to set the authentication tag. */
-export interface DecryptionStream
-  extends TransformStream<Uint8Array, Uint8Array> {
+export interface DecryptionStream extends TransformStream<
+  Uint8Array,
+  Uint8Array
+> {
   /** Set the authentication tag. */
   setAuthTag(authTag: Uint8Array): void;
 }

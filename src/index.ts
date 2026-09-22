@@ -6,6 +6,7 @@
  */
 export {
   init,
+  WASM_URL,
   createEncryptionStream,
   createDecryptionStream,
   type EncryptionStream,
