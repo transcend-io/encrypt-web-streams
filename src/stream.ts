@@ -11,23 +11,31 @@ const AUTH_TAG_LENGTH = 16;
 
 let _wasmReady: InitOutput | undefined;
 
-/** Default wasm asset URL resolved relative to the generated wasm loader. */
+/** Default wasm asset URL; matches the generated loader's own default. */
 export const WASM_URL = new URL(
-  'aes_gcm_stream_wasm_bg.wasm',
-  new URL('../wasm/aes_gcm_stream_wasm.js', import.meta.url),
+  '../wasm/aes_gcm_stream_wasm_bg.wasm',
+  import.meta.url,
 ).href;
 
 /**
  * Initialize the WebAssembly module.
  *
- * @param moduleOrPath - Optional wasm module source passed through to the
- *   generated loader (URL, fetch Response, bytes, etc.).
+ * @param options - Optional wasm module source (URL, fetch Response, bytes,
+ *   etc.) forwarded to the generated loader. Omit to load from `WASM_URL`.
  * @returns A promise that resolves when the Wasm module has been initialized.
  */
-export async function init(
-  moduleOrPath?: InitInput | Promise<InitInput>,
-): Promise<void> {
-  _wasmReady ??= await initWasm(moduleOrPath);
+export async function init(options?: {
+  /** Custom wasm module source to instantiate instead of `WASM_URL`. */
+  moduleOrPath: InitInput | Promise<InitInput>;
+}): Promise<void> {
+  // wasm-bindgen's loader only accepts `{ module_or_path }`; passing the
+  // source positionally logs a deprecation warning, and any other key is
+  // silently ignored in favour of the default URL.
+  _wasmReady ??= await initWasm(
+    options === undefined
+      ? undefined
+      : { module_or_path: options.moduleOrPath },
+  );
 }
 
 /**
