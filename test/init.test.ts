@@ -91,7 +91,7 @@ it('should use the custom module source rather than the default URL', async () =
 
   let error: unknown;
   try {
-    await init({ moduleOrPath: corruptBytes });
+    await init({ module_or_path: corruptBytes });
   } catch (error_) {
     error = error_;
   }
@@ -104,7 +104,7 @@ it('should use the custom module source rather than the default URL', async () =
 
 it('should initialize from custom bytes without a deprecation warning', async () => {
   const warnings = await captureWarnings(() =>
-    init({ moduleOrPath: wasmBytes }),
+    init({ module_or_path: wasmBytes }),
   );
   assert.deepStrictEqual(
     warnings,

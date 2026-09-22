@@ -22,20 +22,16 @@ export const WASM_URL = new URL(
  *
  * @param options - Optional wasm module source (URL, fetch Response, bytes,
  *   etc.) forwarded to the generated loader. Omit to load from `WASM_URL`.
+ *   Uses `module_or_path` to match wasm-bindgen's object-form init API.
  * @returns A promise that resolves when the Wasm module has been initialized.
  */
 export async function init(options?: {
   /** Custom wasm module source to instantiate instead of `WASM_URL`. */
-  moduleOrPath: InitInput | Promise<InitInput>;
+  module_or_path: InitInput | Promise<InitInput>;
 }): Promise<void> {
-  // wasm-bindgen's loader only accepts `{ module_or_path }`; passing the
-  // source positionally logs a deprecation warning, and any other key is
-  // silently ignored in favour of the default URL.
-  _wasmReady ??= await initWasm(
-    options === undefined
-      ? undefined
-      : { module_or_path: options.moduleOrPath },
-  );
+  // Pass the object form through unchanged. Positional InitInput is deprecated
+  // (console.warn); any other key is silently ignored in favour of WASM_URL.
+  _wasmReady ??= await initWasm(options);
 }
 
 /**
