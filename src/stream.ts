@@ -21,8 +21,8 @@ export const WASM_URL = new URL(
  * Initialize the WebAssembly module.
  *
  * @param options - Optional wasm module source (URL, fetch Response, bytes,
- *   etc.) forwarded to the generated loader. Omit to load from `WASM_URL`.
- *   Uses `module_or_path` to match wasm-bindgen's object-form init API.
+ *   etc.) forwarded to the generated loader. Omit to load from `WASM_URL`. Uses
+ *   `module_or_path` to match wasm-bindgen's object-form init API.
  * @returns A promise that resolves when the Wasm module has been initialized.
  */
 export async function init(options?: {
