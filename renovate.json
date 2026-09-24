@@ -1,23 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["github>transcend-io/renovate-config:libraries"],
-  "customManagers": [
-    {
-      "customType": "regex",
-      "description": "Update the pinned Rust toolchain",
-      "managerFilePatterns": ["/(^|/)rust-toolchain\\.toml$/"],
-      "matchStrings": [
-        "channel\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
-      ],
-      "depNameTemplate": "rust",
-      "packageNameTemplate": "rust-lang/rust",
-      "datasourceTemplate": "github-releases"
-    }
-  ],
   "packageRules": [
     {
       "description": "Let crates, Rust toolchain, and Node.js releases settle before picking them up",
-      "matchDatasources": ["crate", "github-releases", "node-version"],
+      "matchDatasources": ["crate", "rust-version", "node-version"],
       "minimumReleaseAge": "3 days"
     },
     {
