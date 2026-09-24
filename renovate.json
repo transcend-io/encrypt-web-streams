@@ -1,4 +1,23 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>transcend-io/renovate-config:libraries"]
+  "extends": ["github>transcend-io/renovate-config:libraries"],
+  "packageRules": [
+    {
+      "description": "Let crates, Rust toolchain, and Node.js releases settle before picking them up",
+      "matchDatasources": ["crate", "rust-version", "node-version"],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "wasm-bindgen crates pin each other to exact versions and must move together",
+      "matchDatasources": ["crate"],
+      "matchPackageNames": [
+        "wasm-bindgen",
+        "wasm-bindgen-*",
+        "js-sys",
+        "web-sys"
+      ],
+      "groupName": "wasm-bindgen",
+      "groupSlug": "wasm-bindgen"
+    }
+  ]
 }

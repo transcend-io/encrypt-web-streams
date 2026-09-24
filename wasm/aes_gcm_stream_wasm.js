@@ -74,6 +74,14 @@ export class Decryptor {
         wasm.__wbg_decryptor_free(ptr, 0);
     }
     /**
+     * @param {Uint8Array} adata
+     */
+    init_adata(adata) {
+        const ptr0 = passArray8ToWasm0(adata, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.decryptor_init_adata(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
      * @param {Uint8Array} key
      * @param {Uint8Array} iv
      */
@@ -89,14 +97,6 @@ export class Decryptor {
         this.__wbg_ptr = ret[0] >>> 0;
         DecryptorFinalization.register(this, this.__wbg_ptr, this);
         return this;
-    }
-    /**
-     * @param {Uint8Array} adata
-     */
-    init_adata(adata) {
-        const ptr0 = passArray8ToWasm0(adata, wasm.__wbindgen_malloc);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.decryptor_init_adata(this.__wbg_ptr, ptr0, len0);
     }
     /**
      * @param {Uint8Array} chunk
@@ -146,6 +146,15 @@ export class Encryptor {
         wasm.__wbg_encryptor_free(ptr, 0);
     }
     /**
+     * (Optional) set Additional Authenticated Data.
+     * @param {Uint8Array} adata
+     */
+    init_adata(adata) {
+        const ptr0 = passArray8ToWasm0(adata, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.encryptor_init_adata(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
      * Create with a 32-byte key and iv (recommend 12 bytes).
      * @param {Uint8Array} key
      * @param {Uint8Array} iv
@@ -162,15 +171,6 @@ export class Encryptor {
         this.__wbg_ptr = ret[0] >>> 0;
         EncryptorFinalization.register(this, this.__wbg_ptr, this);
         return this;
-    }
-    /**
-     * (Optional) set Additional Authenticated Data.
-     * @param {Uint8Array} adata
-     */
-    init_adata(adata) {
-        const ptr0 = passArray8ToWasm0(adata, wasm.__wbindgen_malloc);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.encryptor_init_adata(this.__wbg_ptr, ptr0, len0);
     }
     /**
      * Encrypt one chunk; returns ciphertext for that chunk.
