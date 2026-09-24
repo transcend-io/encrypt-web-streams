@@ -1,3 +1,4 @@
 allowBuilds:
   esbuild: true
   wasm-pack: true
+minimumReleaseAge: 5760 # 4 days, in minutes
