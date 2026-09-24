@@ -1,2 +1,3 @@
-onlyBuiltDependencies:
-  - wasm-pack
+allowBuilds:
+  esbuild: true
+  wasm-pack: true
