@@ -119,6 +119,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
     needs:
       - build
       - test
@@ -138,13 +139,8 @@ jobs:
       - name: Ensure no changed files
         run: git diff --exit-code
 
-      - name: Configure npm authentication
-        run: |
-          pnpm config set always-auth true
-          pnpm config set //registry.npmjs.org/:_authToken "${{ secrets.NPM_TOKEN }}"
-
       - name: Publish to npm
-        run: pnpm publish
+        run: pnpm publish --provenance
 
       - name: Configure GitHub Packages authentication
         run: |
@@ -153,4 +149,4 @@ jobs:
           pnpm config set //npm.pkg.github.com/:_authToken "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Publish to GitHub Packages
-        run: pnpm publish
+        run: pnpm publish --provenance
