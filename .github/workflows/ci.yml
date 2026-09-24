@@ -26,7 +26,7 @@ jobs:
         run: pnpm install
 
       - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2
         with:
           cache-workspaces: |
             ./rust -> target
@@ -90,7 +90,7 @@ jobs:
 
       - name: Setup Rust
         if: ${{ matrix.needs_rust }}
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2
         with:
           cache-workspaces: |
             ./rust -> target
