@@ -1,6 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "local>transcend-io/renovate-config"
-  ]
+  "extends": ["github>transcend-io/renovate-config:libraries"]
 }
