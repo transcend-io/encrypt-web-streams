@@ -7,6 +7,23 @@ on:
   pull_request:
 
 jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          hide-progress: true
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -120,6 +137,7 @@ jobs:
       contents: read
       packages: write
     needs:
+      - trivy
       - build
       - test
     steps:
