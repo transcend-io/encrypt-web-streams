@@ -14,6 +14,8 @@ dist/
 # WebAssembly
 wasm/*.wasm
 wasm/*.wat
+# Generated from the wasm binary by scripts/embed-wasm.mjs
+src/embedded-wasm-base64.ts
 
 # For scratch work / misc development
 hidden/
