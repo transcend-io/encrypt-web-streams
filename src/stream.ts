@@ -4,14 +4,25 @@ import initWasm, {
   type InitInput,
   type InitOutput,
 } from '../wasm/aes_gcm_stream_wasm.js';
+import { getEmbeddedWasmBytes } from './embedded-wasm.js';
 import { promiseWithResolvers } from './helpers.js';
 
 /** The required length of the authentication tag in bytes. */
 const AUTH_TAG_LENGTH = 16;
 
+/** Set once instantiated; the stream factories check this synchronously. */
 let _wasmReady: InitOutput | undefined;
+/**
+ * In-flight instantiation shared by concurrent `init()` callers; cleared on
+ * failure.
+ */
+let _wasmInit: Promise<InitOutput> | undefined;
 
-/** Default wasm asset URL; matches the generated loader's own default. */
+/**
+ * URL of the packaged `.wasm` asset. `init()` does not fetch this by default;
+ * it is exported for callers that host the module themselves and load it via
+ * `init({ module_or_path })`.
+ */
 export const WASM_URL = new URL(
   '../wasm/aes_gcm_stream_wasm_bg.wasm',
   import.meta.url,
@@ -20,18 +31,31 @@ export const WASM_URL = new URL(
 /**
  * Initialize the WebAssembly module.
  *
+ * By default the module is instantiated from bytes embedded in this package's
+ * JavaScript, so no separate `.wasm` request is made. Concurrent calls share
+ * one instantiation; a failed attempt is not cached, so a later call retries.
+ *
  * @param options - Optional wasm module source (URL, fetch Response, bytes,
- *   etc.) forwarded to the generated loader. Omit to load from `WASM_URL`. Uses
+ *   etc.) forwarded to the generated loader instead of the embedded bytes. Uses
  *   `module_or_path` to match wasm-bindgen's object-form init API.
  * @returns A promise that resolves when the Wasm module has been initialized.
  */
 export async function init(options?: {
-  /** Custom wasm module source to instantiate instead of `WASM_URL`. */
+  /** Custom wasm module source to instantiate instead of the embedded bytes. */
   module_or_path: InitInput | Promise<InitInput>;
 }): Promise<void> {
+  if (_wasmReady) {
+    return;
+  }
   // Pass the object form through unchanged. Positional InitInput is deprecated
-  // (console.warn); any other key is silently ignored in favour of WASM_URL.
-  _wasmReady ??= await initWasm(options);
+  // (console.warn); any other key is silently ignored by the generated loader.
+  _wasmInit ??= initWasm(
+    options ?? { module_or_path: getEmbeddedWasmBytes() },
+  ).catch((error: unknown) => {
+    _wasmInit = undefined;
+    throw error;
+  });
+  _wasmReady = await _wasmInit;
 }
 
 /**
