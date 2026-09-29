@@ -7,6 +7,7 @@
     // tooling, e.g. eslint.config.js, prettier.config.js
     "*.config.js",
     "*.config.ts",
+    "scripts/**/*.mjs",
     "test/fixtures/**/*.ts",
     "test/fixtures/files/fixtures.json"
   ],

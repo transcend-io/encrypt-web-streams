@@ -59,10 +59,18 @@ import {
 ### `init()`
 
 ```typescript
-function init(): Promise<void>;
+function init(options?: {
+  module_or_path: InitInput | Promise<InitInput>;
+}): Promise<void>;
 ```
 
-Asynchronously loads and initializes the WebAssembly module. This must be called and awaited before any other functions from this library can be used.
+Asynchronously initializes the WebAssembly module. This must be called and awaited before any other functions from this library can be used.
+
+By default the module is instantiated from bytes embedded in the package's JavaScript, so no separate `.wasm` network request is made and the library works behind proxies or CDNs that rewrite or block `.wasm` responses. Concurrent `init()` calls share one instantiation, and a failed attempt is not cached, so a later call retries.
+
+**Parameters:**
+
+- `options.module_or_path` (optional): A custom wasm module source (URL, `Request`, `Response`, `BufferSource`, or `WebAssembly.Module`) forwarded to the wasm-bindgen loader instead of the embedded bytes. The packaged asset URL is exported as `WASM_URL` for callers that want to host the module themselves.
 
 **Returns:**
 

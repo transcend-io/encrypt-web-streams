@@ -26,7 +26,15 @@ const eslintConfig = tseslint.config(
     },
   },
   {
-    ignores: ['dist', '.build', 'coverage', 'wasm', 'rust', 'hidden'],
+    ignores: [
+      'dist',
+      '.build',
+      'coverage',
+      'wasm',
+      'rust',
+      'hidden',
+      'src/embedded-wasm-base64.ts',
+    ],
   },
 );
 

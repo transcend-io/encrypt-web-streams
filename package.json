@@ -1,6 +1,6 @@
 {
   "name": "@transcend-io/encrypt-web-streams",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "WebAssembly-powered streaming AES-256-GCM encryption and decryption with a web-native TransformStream API.",
   "type": "module",
   "main": "./dist/index.js",
@@ -20,12 +20,12 @@
   "scripts": {
     "build": "pnpm run build:rust && pnpm run build:js",
     "build:rust": "bash build-rust.sh",
-    "build:js": "tsc --build --force",
+    "build:js": "node scripts/embed-wasm.mjs && tsc --build --force",
     "test:rust": "pnpm run test:rust:ci",
     "test:js": "pnpm build && pnpm run test:js:ci",
     "test:fixtures": "pnpm build && pnpm run test:fixtures:ci",
     "test:rust:ci": "cd rust && wasm-pack test --chrome && cargo test && cd patches/aes-gcm-stream && cargo test",
-    "test:js:ci": "web-test-runner --node-resolve --playwright --browsers chromium firefox webkit --files test/**/*.test.ts --files !test/speed.test.ts --files !test/fixtures.test.ts",
+    "test:js:ci": "node scripts/embed-wasm.mjs && web-test-runner --node-resolve --playwright --browsers chromium firefox webkit --files test/**/*.test.ts --files !test/speed.test.ts --files !test/fixtures.test.ts",
     "test:fixtures:ci": "bash test-fixtures.sh",
     "test:fixtures:big": "FF_BIG_FIXTURES=include bash test-fixtures.sh",
     "rebuild-fixtures": "tsx test/fixtures/rebuild-fixtures.ts",
