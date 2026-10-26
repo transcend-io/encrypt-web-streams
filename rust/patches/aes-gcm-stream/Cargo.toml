@@ -58,7 +58,7 @@ version = "1.6"
 features = ["zeroize_derive"]
 
 [dev-dependencies.aes-gcm]
-version = "=0.10.3"
+version = "=0.11.1"
 features = ["zeroize"]
 
 [dev-dependencies.benchmark-simple]
