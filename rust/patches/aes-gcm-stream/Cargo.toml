@@ -44,7 +44,7 @@ name = "encrypt_and_decrypt"
 path = "examples/encrypt_and_decrypt.rs"
 
 [dependencies.aes]
-version = "0.8"
+version = "0.9"
 features = ["zeroize"]
 
 [dependencies.cipher]
